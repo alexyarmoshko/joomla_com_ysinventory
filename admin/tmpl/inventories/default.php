@@ -124,6 +124,11 @@ if ($saveOrder && !empty($this->items)) {
                                 </th>
                                 <td class="small d-none d-md-table-cell">
                                     <?php echo $this->escape($item->contact_name ?? ''); ?>
+                                    <?php if (!empty($item->contact_type)) : ?>
+                                        <div class="small text-muted">
+                                            <?php echo Text::_('COM_YSINVENTORY_CONTACT_TYPE_' . strtoupper($item->contact_type)); ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="d-none d-md-table-cell">
                                     <?php echo $item->id; ?>

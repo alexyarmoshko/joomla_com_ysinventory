@@ -17,7 +17,6 @@ namespace YakShaver\Component\Ysinventory\Administrator\Model;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
-use Joomla\Database\QueryInterface;
 
 class InventoriesModel extends ListModel
 {
@@ -34,7 +33,8 @@ class InventoriesModel extends ListModel
                 'created_by', 'a.created_by',
                 'checked_out', 'a.checked_out',
                 'checked_out_time', 'a.checked_out_time',
-                'ysi_contact_id', 'a.ysi_contact_id',
+                'ysi_contact_user_id', 'a.ysi_contact_user_id',
+                'ysi_contact_contact_id', 'a.ysi_contact_contact_id',
                 'contact_name',
             ];
         }
@@ -60,31 +60,97 @@ class InventoriesModel extends ListModel
         $db    = $this->getDatabase();
         $query = $db->getQuery(true);
 
-        $query->select(
-            $db->quoteName(
-                [
-                    'a.id',
-                    'a.name',
-                    'a.alias',
-                    'a.description',
-                    'a.ysi_contact_id',
-                    'a.published',
-                    'a.checked_out',
-                    'a.checked_out_time',
-                    'a.ordering',
-                    'a.created',
-                    'a.created_by',
-                ]
-            )
-        );
+        $inventoryColumns = $db->getTableColumns('#__ysi_inventories', false);
+
+        $selectColumns = [
+            'a.id',
+            'a.name',
+            'a.alias',
+            'a.description',
+            'a.published',
+            'a.checked_out',
+            'a.checked_out_time',
+            'a.ordering',
+            'a.created',
+            'a.created_by',
+        ];
+
+        $hasContactUserId    = isset($inventoryColumns['ysi_contact_user_id']);
+        $hasContactContactId = isset($inventoryColumns['ysi_contact_contact_id']);
+        $hasLegacyContactId  = isset($inventoryColumns['ysi_contact_id']);
+
+        if ($hasContactUserId) {
+            $selectColumns[] = 'a.ysi_contact_user_id';
+        }
+
+        if ($hasContactContactId) {
+            $selectColumns[] = 'a.ysi_contact_contact_id';
+        }
+
+        if ($hasLegacyContactId) {
+            $selectColumns[] = 'a.ysi_contact_id';
+        }
+
+        $query->select($db->quoteName($selectColumns));
         $query->from($db->quoteName('#__ysi_inventories', 'a'));
 
-        // Join Joomla user for contact name.
-        $query->select($db->quoteName('uc.name', 'contact_name'))
-            ->join(
+        $effectiveUserIdExpression = '0';
+
+        if ($hasContactUserId && $hasLegacyContactId) {
+            $effectiveUserIdExpression = 'COALESCE(NULLIF(' . $db->quoteName('a.ysi_contact_user_id')
+                . ', 0), NULLIF(' . $db->quoteName('a.ysi_contact_id') . ', 0))';
+        } elseif ($hasContactUserId) {
+            $effectiveUserIdExpression = $db->quoteName('a.ysi_contact_user_id');
+        } elseif ($hasLegacyContactId) {
+            $effectiveUserIdExpression = $db->quoteName('a.ysi_contact_id');
+        }
+
+        $hasUserJoin = $hasContactUserId || $hasLegacyContactId;
+
+        if ($hasUserJoin) {
+            $query->join(
                 'LEFT',
-                $db->quoteName('#__users', 'uc') . ' ON ' . $db->quoteName('uc.id') . ' = ' . $db->quoteName('a.ysi_contact_id')
+                $db->quoteName('#__users', 'uc') . ' ON ' . $db->quoteName('uc.id') . ' = ' . $effectiveUserIdExpression
             );
+        }
+
+        $hasContactDetailsTable = false;
+
+        if ($hasContactContactId) {
+            try {
+                $hasContactDetailsTable = !empty($db->getTableColumns('#__contact_details', false));
+            } catch (\RuntimeException $e) {
+                $hasContactDetailsTable = false;
+            }
+        }
+
+        if ($hasContactContactId && $hasContactDetailsTable) {
+            $query->join(
+                'LEFT',
+                $db->quoteName('#__contact_details', 'cc') . ' ON ' . $db->quoteName('cc.id') . ' = ' . $db->quoteName('a.ysi_contact_contact_id')
+            );
+
+            $query->select(
+                'CASE'
+                . ' WHEN ' . $db->quoteName('a.ysi_contact_contact_id') . ' > 0 THEN ' . $db->quoteName('cc.name')
+                . ' ELSE ' . ($hasUserJoin ? $db->quoteName('uc.name') : $db->quote(''))
+                . ' END AS ' . $db->quoteName('contact_name')
+            );
+
+            $query->select(
+                'CASE'
+                . ' WHEN ' . $db->quoteName('a.ysi_contact_contact_id') . ' > 0 THEN ' . $db->quote('contact')
+                . ($hasUserJoin ? ' WHEN ' . $effectiveUserIdExpression . ' > 0 THEN ' . $db->quote('user') : '')
+                . ' ELSE ' . $db->quote('')
+                . ' END AS ' . $db->quoteName('contact_type')
+            );
+        } elseif ($hasUserJoin) {
+            $query->select($db->quoteName('uc.name', 'contact_name'));
+            $query->select($db->quote('user') . ' AS ' . $db->quoteName('contact_type'));
+        } else {
+            $query->select($db->quote('') . ' AS ' . $db->quoteName('contact_name'));
+            $query->select($db->quote('') . ' AS ' . $db->quoteName('contact_type'));
+        }
 
         // Join checked-out user.
         $query->select($db->quoteName('uco.name', 'editor'))

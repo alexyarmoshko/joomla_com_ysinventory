@@ -16,11 +16,11 @@
 - Makefile for repeatable build packaging
 - Installation artifact: `installation/com_ysinventory-v1-0-0.zip`
 
-### Phase 2 — Inventory entity admin CRUD
+### Phase 2 - Inventory entity admin CRUD
 
-- `#__ysi_inventories` table with name, alias, description, Joomla user contact reference, published state, ordering, and timestamps
+- `#__ysi_inventories` table with name, alias, description, inventory owner reference, published state, ordering, and timestamps
 - Full admin CRUD: Table class, AdminModel, ListModel, FormController, AdminController
 - Admin list view with search, status filter, drag ordering, pagination, and empty state
-- Admin edit form with tabbed layout (details: name/alias/contact/description, publishing: dates/created-by)
+- Admin edit form with tabbed layout (details: name/alias/owner/description, publishing: dates/created-by)
 - Submenu entry for Inventories
-- Contact field uses Joomla `user` form field type for user selection
+- Inventory owner now supports logical XOR: exactly one of Joomla `user` or Joomla `contact`

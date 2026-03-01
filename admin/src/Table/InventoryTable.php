@@ -21,13 +21,14 @@ use Joomla\CMS\Table\Table;
 use Joomla\CMS\User\CurrentUserInterface;
 use Joomla\CMS\User\CurrentUserTrait;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 use Joomla\Event\DispatcherInterface;
 
 class InventoryTable extends Table implements CurrentUserInterface
 {
     use CurrentUserTrait;
 
-    protected $_supportNullValue = true;
+    protected $_supportNullValue = false;
 
     public function __construct(DatabaseInterface $db, ?DispatcherInterface $dispatcher = null)
     {
@@ -98,10 +99,58 @@ class InventoryTable extends Table implements CurrentUserInterface
 
         $this->generateAlias();
 
-        if (!$this->ysi_contact_id) {
-            $this->setError(Text::_('COM_YSINVENTORY_ERROR_CONTACT_REQUIRED'));
+        $contactUserId    = (int) ($this->ysi_contact_user_id ?? 0);
+        $contactContactId = (int) ($this->ysi_contact_contact_id ?? 0);
+        $legacyContactId  = (int) ($this->ysi_contact_id ?? 0);
+
+        // Backward compatibility for rows created before XOR contact migration.
+        if ($contactUserId === 0 && $contactContactId === 0 && $legacyContactId > 0) {
+            $contactUserId = $legacyContactId;
+        }
+
+        $this->ysi_contact_user_id    = $contactUserId;
+        $this->ysi_contact_contact_id = $contactContactId;
+        $this->ysi_contact_id         = $contactUserId;
+
+        $hasUserOwner    = $contactUserId > 0;
+        $hasContactOwner = $contactContactId > 0;
+
+        if ($hasUserOwner === $hasContactOwner) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_CONTACT_XOR_REQUIRED'));
 
             return false;
+        }
+
+        $db = $this->getDatabase();
+
+        if ($hasUserOwner) {
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__users'))
+                ->where($db->quoteName('id') . ' = :id')
+                ->bind(':id', $contactUserId, ParameterType::INTEGER);
+            $db->setQuery($query);
+
+            if ((int) $db->loadResult() === 0) {
+                $this->setError(Text::_('COM_YSINVENTORY_ERROR_CONTACT_USER_NOT_FOUND'));
+
+                return false;
+            }
+        }
+
+        if ($hasContactOwner) {
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__contact_details'))
+                ->where($db->quoteName('id') . ' = :id')
+                ->bind(':id', $contactContactId, ParameterType::INTEGER);
+            $db->setQuery($query);
+
+            if ((int) $db->loadResult() === 0) {
+                $this->setError(Text::_('COM_YSINVENTORY_ERROR_CONTACT_CONTACT_NOT_FOUND'));
+
+                return false;
+            }
         }
 
         if (empty($this->id)) {

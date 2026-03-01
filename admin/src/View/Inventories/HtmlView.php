@@ -16,6 +16,7 @@ namespace YakShaver\Component\Ysinventory\Administrator\View\Inventories;
 
 use Joomla\CMS\Helper\ContentHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\MVC\View\GenericDataException;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\Button\DropdownButton;
 use Joomla\CMS\Toolbar\ToolbarHelper;
@@ -38,6 +39,14 @@ class HtmlView extends BaseHtmlView
         $this->state         = $model->getState();
         $this->filterForm    = $model->getFilterForm();
         $this->activeFilters = $model->getActiveFilters();
+
+        if (\count($errors = $model->getErrors())) {
+            throw new GenericDataException(implode("\n", $errors), 500);
+        }
+
+        if (!\is_array($this->items)) {
+            $this->items = [];
+        }
 
         if (!\count($this->items) && $this->isEmptyState = $model->getIsEmptyState()) {
             $this->setLayout('emptystate');
@@ -75,7 +84,6 @@ class HtmlView extends BaseHtmlView
             if ($canDo->get('core.edit.state')) {
                 $childBar->publish('inventories.publish')->listCheck(true);
                 $childBar->unpublish('inventories.unpublish')->listCheck(true);
-                $childBar->archive('inventories.archive')->listCheck(true);
 
                 if ($user->authorise('core.admin')) {
                     $childBar->checkin('inventories.checkin');

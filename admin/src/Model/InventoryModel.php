@@ -15,7 +15,7 @@ namespace YakShaver\Component\Ysinventory\Administrator\Model;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\Form\Form;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 
 class InventoryModel extends AdminModel
@@ -23,6 +23,17 @@ class InventoryModel extends AdminModel
     public $typeAlias = 'com_ysinventory.inventory';
 
     protected $formName = 'inventory';
+
+    public function save($data)
+    {
+        if (!\is_array($data)) {
+            return parent::save($data);
+        }
+
+        $data = $this->normalizeOwnerData($data);
+
+        return parent::save($data);
+    }
 
     public function getForm($data = [], $loadData = true)
     {
@@ -54,6 +65,24 @@ class InventoryModel extends AdminModel
 
         if (empty($data)) {
             $data = $this->getItem();
+        }
+
+        if (\is_object($data)) {
+            if (
+                empty($data->ysi_contact_user_id)
+                && empty($data->ysi_contact_contact_id)
+                && !empty($data->ysi_contact_id)
+            ) {
+                $data->ysi_contact_user_id = (int) $data->ysi_contact_id;
+            }
+        } elseif (\is_array($data)) {
+            if (
+                empty($data['ysi_contact_user_id'])
+                && empty($data['ysi_contact_contact_id'])
+                && !empty($data['ysi_contact_id'])
+            ) {
+                $data['ysi_contact_user_id'] = (int) $data['ysi_contact_id'];
+            }
         }
 
         $this->preprocessData('com_ysinventory.inventory', $data);
@@ -99,5 +128,94 @@ class InventoryModel extends AdminModel
     protected function canEditState($record)
     {
         return $this->getCurrentUser()->authorise('core.edit.state', 'com_ysinventory');
+    }
+
+    public function publish(&$pks, $value = 1)
+    {
+        if ((int) $value === 2) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_ARCHIVE_NOT_SUPPORTED'));
+
+            return false;
+        }
+
+        return parent::publish($pks, $value);
+    }
+
+    private function normalizeOwnerData(array $data): array
+    {
+        $postData = Factory::getApplication()->getInput()->post->get('jform', [], 'array');
+
+        $data['ysi_contact_user_id'] = $this->extractOwnerId(
+            $data['ysi_contact_user_id'] ?? ($postData['ysi_contact_user_id'] ?? null)
+        );
+        $data['ysi_contact_contact_id'] = $this->extractOwnerId(
+            $data['ysi_contact_contact_id'] ?? ($postData['ysi_contact_contact_id'] ?? null)
+        );
+
+        if (
+            $data['ysi_contact_user_id'] === 0
+            && $data['ysi_contact_contact_id'] === 0
+        ) {
+            $legacy = $this->extractOwnerId($data['ysi_contact_id'] ?? ($postData['ysi_contact_id'] ?? null));
+
+            if ($legacy > 0) {
+                $data['ysi_contact_user_id'] = $legacy;
+            }
+        }
+
+        if (
+            $data['ysi_contact_user_id'] > 0
+            && $data['ysi_contact_contact_id'] > 0
+        ) {
+            $lastSelected = strtolower(trim((string) ($postData['ysi_owner_last_selected'] ?? ($data['ysi_owner_last_selected'] ?? ''))));
+
+            if ($lastSelected === 'user') {
+                $data['ysi_contact_contact_id'] = 0;
+            } else {
+                // Default precedence to contact when both values are posted.
+                $data['ysi_contact_user_id'] = 0;
+            }
+        }
+
+        // Keep legacy user owner value populated for backward compatibility readers.
+        $data['ysi_contact_id'] = $data['ysi_contact_user_id'];
+        unset($data['ysi_owner_last_selected']);
+
+        return $data;
+    }
+
+    private function extractOwnerId($value): int
+    {
+        if (\is_array($value)) {
+            $values = array_reverse($value);
+
+            foreach ($values as $candidate) {
+                $id = $this->extractOwnerId($candidate);
+
+                if ($id > 0) {
+                    return $id;
+                }
+            }
+
+            return 0;
+        }
+
+        if (\is_string($value)) {
+            $trimmed = trim($value);
+
+            if ($trimmed === '') {
+                return 0;
+            }
+
+            if (str_contains($trimmed, ':')) {
+                [$id] = explode(':', $trimmed, 2);
+
+                return (int) $id;
+            }
+
+            return (int) $trimmed;
+        }
+
+        return (int) $value;
     }
 }

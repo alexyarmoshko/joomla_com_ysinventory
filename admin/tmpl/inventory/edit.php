@@ -24,6 +24,163 @@ $wa = $this->getDocument()->getWebAssetManager();
 $wa->useScript('keepalive')
     ->useScript('form.validate');
 
+$this->getDocument()->addScriptDeclaration(
+    <<<'JS'
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('inventory-form');
+
+    if (!form) {
+        return;
+    }
+
+    const getFieldInputs = (fieldName) => {
+        const inputs = Array.from(form.querySelectorAll(`input[name="jform[${fieldName}]"]`));
+        const hidden = inputs.find((input) => input.type === 'hidden') || null;
+        const title = inputs.find((input) => input.type !== 'hidden') || null;
+
+        return { hidden, title, inputs };
+    };
+
+    const setInputValue = (input, value) => {
+        if (!input) {
+            return;
+        }
+
+        input.value = value;
+        input.setAttribute('value', value);
+    };
+
+    const getInputValue = (input) => {
+        if (!input) {
+            return '';
+        }
+
+        const value = `${input.value ?? ''}`.trim();
+
+        if (value !== '') {
+            return value;
+        }
+
+        return `${input.getAttribute('value') ?? ''}`.trim();
+    };
+
+    const hasOwnerValue = (input) => {
+        const value = getInputValue(input);
+        return value !== '' && value !== '0';
+    };
+
+    const userInputs = getFieldInputs('ysi_contact_user_id');
+    const userInput = userInputs.hidden;
+    const userNameInput = userInputs.title;
+    const userField = form.querySelector('joomla-field-user');
+    const contactInputs = getFieldInputs('ysi_contact_contact_id');
+    const contactInput = contactInputs.hidden;
+    const contactNameInput = contactInputs.title;
+
+    if (!userInput || !contactInput) {
+        return;
+    }
+
+    let ownerLastSelectedInput = form.querySelector('input[name="jform[ysi_owner_last_selected]"]');
+
+    if (!ownerLastSelectedInput) {
+        ownerLastSelectedInput = document.createElement('input');
+        ownerLastSelectedInput.type = 'hidden';
+        ownerLastSelectedInput.name = 'jform[ysi_owner_last_selected]';
+        ownerLastSelectedInput.value = '';
+        form.appendChild(ownerLastSelectedInput);
+    }
+
+    // Prevent duplicate-name title inputs from being posted instead of numeric IDs.
+    userInputs.inputs
+        .filter((input) => input.type !== 'hidden')
+        .forEach((input) => input.removeAttribute('name'));
+    contactInputs.inputs
+        .filter((input) => input.type !== 'hidden')
+        .forEach((input) => input.removeAttribute('name'));
+
+    let syncing = false;
+    let lastOwnerChanged = '';
+
+    const clearUser = () => {
+        if (userField && typeof userField.setValue === 'function') {
+            userField.setValue('', '');
+        }
+
+        const changed = hasOwnerValue(userInput);
+        setInputValue(userInput, '');
+        setInputValue(userNameInput, '');
+
+        if (changed) {
+            userInput.dispatchEvent(new CustomEvent('change', { bubbles: true, cancelable: true }));
+        }
+    };
+
+    const clearContact = () => {
+        const changed = hasOwnerValue(contactInput);
+        setInputValue(contactInput, '');
+        setInputValue(contactNameInput, '');
+
+        if (changed) {
+            contactInput.dispatchEvent(new CustomEvent('change', { bubbles: true, cancelable: true }));
+        }
+    };
+
+    form.addEventListener('change', (event) => {
+        if (syncing) {
+            return;
+        }
+
+        const target = event.target;
+        const targetId = target && target.id ? target.id : '';
+        const targetName = target && target.name ? target.name : '';
+        const userChanged = target === userInput
+            || target === userField
+            || targetId.includes('ysi_contact_user_id')
+            || targetName.includes('[ysi_contact_user_id]');
+        const contactChanged = target === contactInput
+            || targetId.includes('ysi_contact_contact_id')
+            || targetName.includes('[ysi_contact_contact_id]');
+
+        if (userChanged && hasOwnerValue(userInput)) {
+            lastOwnerChanged = 'user';
+            ownerLastSelectedInput.value = 'user';
+            syncing = true;
+            clearContact();
+            syncing = false;
+        } else if (contactChanged && hasOwnerValue(contactInput)) {
+            lastOwnerChanged = 'contact';
+            ownerLastSelectedInput.value = 'contact';
+            syncing = true;
+            clearUser();
+            syncing = false;
+        }
+    }, true);
+
+    form.addEventListener('submit', () => {
+        const userValue = getInputValue(userInput);
+        const contactValue = getInputValue(contactInput);
+
+        // Normalize runtime values before submit because Joomla user field uses setAttribute().
+        setInputValue(userInput, userValue);
+        setInputValue(contactInput, contactValue);
+
+        if (!hasOwnerValue(userInput) || !hasOwnerValue(contactInput)) {
+            return;
+        }
+
+        if (lastOwnerChanged === 'contact') {
+            clearUser();
+            ownerLastSelectedInput.value = 'contact';
+        } else {
+            clearContact();
+            ownerLastSelectedInput.value = 'user';
+        }
+    }, true);
+});
+JS
+);
+
 ?>
 <form action="<?php echo Route::_('index.php?option=com_ysinventory&layout=edit&id=' . (int) $this->item->id); ?>"
     method="post" name="adminForm" id="inventory-form"
@@ -38,7 +195,11 @@ $wa->useScript('keepalive')
         <?php echo HTMLHelper::_('uitab.addTab', 'myTab', 'details', empty($this->item->id) ? Text::_('COM_YSINVENTORY_INVENTORY_NEW') : Text::_('COM_YSINVENTORY_INVENTORY_EDIT')); ?>
         <div class="row">
             <div class="col-lg-9">
-                <?php echo $this->form->renderField('ysi_contact_id'); ?>
+                <fieldset id="fieldset-owner" class="options-form">
+                    <legend><?php echo Text::_('COM_YSINVENTORY_FIELDSET_OWNER_LABEL'); ?></legend>
+                    <?php echo $this->form->renderField('ysi_contact_user_id'); ?>
+                    <?php echo $this->form->renderField('ysi_contact_contact_id'); ?>
+                </fieldset>
                 <?php echo $this->form->renderField('description'); ?>
             </div>
             <div class="col-lg-3">

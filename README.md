@@ -5,6 +5,7 @@ A Joomla 5.4 component for inventory management and lending.
 ## Features
 
 - Inventory management with categories, brands, locations, and tags
+- Inventory owner selection supports exactly one of Joomla user or Joomla contact (XOR)
 - Item catalog with filtering, search, and pagination
 - Lending workflow with request/moderation and stock enforcement
 - Configurable permissions via Joomla user groups
