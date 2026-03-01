@@ -25,8 +25,13 @@ class DisplayController extends BaseController
      */
     protected $default_view = 'ysinventory';
 
-    public function display($cachable = false, $urlparams = [])
+    public function display($cachable = true, $urlparams = [])
     {
+        $urlparams['id']     = 'INT';
+        $urlparams['catid']  = 'INT';
+        $urlparams['view']   = 'CMD';
+        $urlparams['layout'] = 'CMD';
+
         return parent::display($cachable, $urlparams);
     }
 }

@@ -29,6 +29,7 @@
 
     <files folder="site">
         <folder>src</folder>
+        <folder>tmpl</folder>
     </files>
     <languages folder="site">
         <language tag="en-GB">language/en-GB/com_ysinventory.ini</language>
@@ -41,6 +42,7 @@
         <menu img="class:archive" link="option=com_ysinventory">COM_YSINVENTORY</menu>
         <submenu>
             <menu link="option=com_ysinventory&amp;view=inventories" view="inventories" img="class:archive" alt="Ysinventory/Inventories">COM_YSINVENTORY_SUBMENU_INVENTORIES</menu>
+            <menu link="option=com_ysinventory&amp;view=categories" view="categories" img="class:folder" alt="Ysinventory/Categories">COM_YSINVENTORY_SUBMENU_CATEGORIES</menu>
         </submenu>
         <files folder="admin">
             <filename>access.xml</filename>
