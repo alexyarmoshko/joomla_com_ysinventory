@@ -48,8 +48,6 @@
                 img="class:folder" alt="Ysinventory/Categories">COM_YSINVENTORY_SUBMENU_CATEGORIES</menu>
             <menu link="option=com_ysinventory&amp;view=brands" view="brands" img="class:bookmark"
                 alt="Ysinventory/Brands">COM_YSINVENTORY_SUBMENU_BRANDS</menu>
-            <menu link="option=com_ysinventory&amp;view=locations" view="locations"
-                img="class:location" alt="Ysinventory/Locations">COM_YSINVENTORY_SUBMENU_LOCATIONS</menu>
         </submenu>
         <files folder="admin">
             <filename>access.xml</filename>

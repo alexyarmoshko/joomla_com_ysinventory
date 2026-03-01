@@ -61,16 +61,6 @@ class DisplayController extends BaseController
             return false;
         }
 
-        if ($view == 'location' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.location', $id)) {
-            if (!\count($this->app->getMessageQueue())) {
-                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
-            }
-
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=locations', false));
-
-            return false;
-        }
-
         return parent::display();
     }
 }

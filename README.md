@@ -4,7 +4,7 @@ A Joomla 5.4 component for inventory management and lending.
 
 ## Features
 
-- Inventory management with categories, brands, locations, and tags
+- Inventory management with categories, brands, and tags
 - Inventory owner selection supports exactly one of Joomla user or Joomla contact (XOR)
 - Item catalog with filtering, search, and pagination
 - Lending workflow with request/moderation and stock enforcement
@@ -39,7 +39,7 @@ This component is under active development in phased increments:
 - **Phase 1**: Bootstrap and installability baseline
 - **Phase 2**: Inventory entity admin CRUD
 - **Phase 3**: Component-local categories
-- **Phase 4**: Brands and locations
+- **Phase 4**: Brands
 - **Phase 5**: Tag groups and tags
 - **Phase 6**: Items and catalog browsing
 - **Phase 7**: Lending workflow
