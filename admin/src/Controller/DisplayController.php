@@ -61,6 +61,26 @@ class DisplayController extends BaseController
             return false;
         }
 
+        if ($view == 'taggroup' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.taggroup', $id)) {
+            if (!\count($this->app->getMessageQueue())) {
+                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
+            }
+
+            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=taggroups', false));
+
+            return false;
+        }
+
+        if ($view == 'tag' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.tag', $id)) {
+            if (!\count($this->app->getMessageQueue())) {
+                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
+            }
+
+            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=tags', false));
+
+            return false;
+        }
+
         return parent::display();
     }
 }
