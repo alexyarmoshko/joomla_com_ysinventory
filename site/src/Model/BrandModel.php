@@ -93,44 +93,26 @@ class BrandModel extends ListModel
         $db = $this->getDatabase();
         $query = $db->getQuery(true);
 
-        // Items belonging to this brand. The table may not exist yet (Phase 6 placeholder).
-        try {
-            $itemColumns = $db->getTableColumns('#__ysi_items', false);
+        $query->select($db->quoteName([
+            'i.id',
+            'i.name',
+            'i.alias',
+            'i.brand_id',
+            'i.published',
+            'i.ordering',
+        ]));
+        $query->from($db->quoteName('#__ysi_items', 'i'));
+        $query->where($db->quoteName('i.brand_id') . ' = :brandId');
+        $query->where($db->quoteName('i.published') . ' = 1');
+        $query->bind(':brandId', $brandId, ParameterType::INTEGER);
 
-            if (!isset($itemColumns['brand_id'])) {
-                throw new \RuntimeException('Items table has no brand_id column');
-            }
+        // Access filter on items.
+        $user = Factory::getApplication()->getIdentity();
+        $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
 
-            $query->select($db->quoteName([
-                'i.id',
-                'i.name',
-                'i.alias',
-                'i.brand_id',
-                'i.published',
-                'i.ordering',
-            ]));
-            $query->from($db->quoteName('#__ysi_items', 'i'));
-            $query->where($db->quoteName('i.brand_id') . ' = :brandId');
-            $query->where($db->quoteName('i.published') . ' = 1');
-            $query->bind(':brandId', $brandId, ParameterType::INTEGER);
-
-            // Access filter on items.
-            $user = Factory::getApplication()->getIdentity();
-
-            if (isset($itemColumns['access'])) {
-                $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
-            }
-
-            $orderCol = $this->state->get('list.ordering', 'i.ordering');
-            $orderDirn = $this->state->get('list.direction', 'asc');
-            $query->order($db->escape($orderCol . ' ' . $orderDirn));
-        } catch (\RuntimeException $e) {
-            // Items table does not exist yet — return empty resultset.
-            $query->select('1 AS ' . $db->quoteName('id'));
-            $query->select($db->quote('') . ' AS ' . $db->quoteName('name'));
-            $query->from($db->quoteName('#__ysi_brands'));
-            $query->where('0 = 1');
-        }
+        $orderCol = $this->state->get('list.ordering', 'i.ordering');
+        $orderDirn = $this->state->get('list.direction', 'asc');
+        $query->order($db->escape($orderCol . ' ' . $orderDirn));
 
         return $query;
     }

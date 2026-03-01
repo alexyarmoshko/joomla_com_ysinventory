@@ -81,6 +81,16 @@ class DisplayController extends BaseController
             return false;
         }
 
+        if ($view == 'item' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.item', $id)) {
+            if (!\count($this->app->getMessageQueue())) {
+                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
+            }
+
+            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=items', false));
+
+            return false;
+        }
+
         return parent::display();
     }
 }

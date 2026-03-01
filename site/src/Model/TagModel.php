@@ -102,45 +102,30 @@ class TagModel extends ListModel
         $db = $this->getDatabase();
         $query = $db->getQuery(true);
 
-        // Items belonging to this tag via join table.
-        try {
-            $db->getTableColumns('#__ysi_item_tag_map', false);
-            $itemColumns = $db->getTableColumns('#__ysi_items', false);
+        $query->select($db->quoteName([
+            'i.id',
+            'i.name',
+            'i.alias',
+            'i.published',
+            'i.ordering',
+        ]));
+        $query->from($db->quoteName('#__ysi_item_tag_map', 'itm'));
+        $query->join(
+            'INNER',
+            $db->quoteName('#__ysi_items', 'i')
+            . ' ON ' . $db->quoteName('i.id') . ' = ' . $db->quoteName('itm.ysi_item_id')
+        );
+        $query->where($db->quoteName('itm.ysi_tag_id') . ' = :tagId');
+        $query->where($db->quoteName('i.published') . ' = 1');
+        $query->bind(':tagId', $tagId, ParameterType::INTEGER);
 
-            $query->select($db->quoteName([
-                'i.id',
-                'i.name',
-                'i.alias',
-                'i.published',
-                'i.ordering',
-            ]));
-            $query->from($db->quoteName('#__ysi_item_tag_map', 'itm'));
-            $query->join(
-                'INNER',
-                $db->quoteName('#__ysi_items', 'i')
-                . ' ON ' . $db->quoteName('i.id') . ' = ' . $db->quoteName('itm.item_id')
-            );
-            $query->where($db->quoteName('itm.tag_id') . ' = :tagId');
-            $query->where($db->quoteName('i.published') . ' = 1');
-            $query->bind(':tagId', $tagId, ParameterType::INTEGER);
+        // Access filter on items.
+        $user = Factory::getApplication()->getIdentity();
+        $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
 
-            // Access filter on items.
-            $user = Factory::getApplication()->getIdentity();
-
-            if (isset($itemColumns['access'])) {
-                $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
-            }
-
-            $orderCol = $this->state->get('list.ordering', 'i.ordering');
-            $orderDirn = $this->state->get('list.direction', 'asc');
-            $query->order($db->escape($orderCol . ' ' . $orderDirn));
-        } catch (\RuntimeException $e) {
-            // Item/map tables do not exist yet — return empty resultset.
-            $query->select('1 AS ' . $db->quoteName('id'));
-            $query->select($db->quote('') . ' AS ' . $db->quoteName('name'));
-            $query->from($db->quoteName('#__ysi_tags'));
-            $query->where('0 = 1');
-        }
+        $orderCol = $this->state->get('list.ordering', 'i.ordering');
+        $orderDirn = $this->state->get('list.direction', 'asc');
+        $query->order($db->escape($orderCol . ' ' . $orderDirn));
 
         return $query;
     }

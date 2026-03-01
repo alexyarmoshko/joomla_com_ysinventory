@@ -66,11 +66,21 @@ class CategoryModel extends ListModel
             return false;
         }
 
-        $db    = $this->getDatabase();
+        $db = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select($db->quoteName([
-                'id', 'title', 'alias', 'description', 'published',
-                'access', 'path', 'parent_id', 'level', 'metadesc', 'metakey', 'language',
+                'id',
+                'title',
+                'alias',
+                'description',
+                'published',
+                'access',
+                'path',
+                'parent_id',
+                'level',
+                'metadesc',
+                'metakey',
+                'language',
             ]))
             ->from($db->quoteName('#__ysi_categories'))
             ->where($db->quoteName('id') . ' = :id')
@@ -78,7 +88,7 @@ class CategoryModel extends ListModel
             ->bind(':id', $catId, ParameterType::INTEGER);
 
         // Access filter.
-        $user   = Factory::getApplication()->getIdentity();
+        $user = Factory::getApplication()->getIdentity();
         $groups = $user->getAuthorisedViewLevels();
         $query->whereIn($db->quoteName('access'), $groups);
 
@@ -96,8 +106,8 @@ class CategoryModel extends ListModel
             return [];
         }
 
-        $db    = $this->getDatabase();
-        $user  = Factory::getApplication()->getIdentity();
+        $db = $this->getDatabase();
+        $user = Factory::getApplication()->getIdentity();
         $query = $db->getQuery(true)
             ->select($db->quoteName(['a.id', 'a.title', 'a.alias', 'a.description', 'a.path', 'a.level']))
             ->from($db->quoteName('#__ysi_categories', 'a'))
@@ -107,29 +117,15 @@ class CategoryModel extends ListModel
             ->order($db->quoteName('a.lft') . ' ASC')
             ->bind(':parentId', $catId, ParameterType::INTEGER);
 
-        // Item count subquery (placeholder until #__ysi_items exists).
-        try {
-            $itemColumns = $db->getTableColumns('#__ysi_items', false);
+        // Item count subquery.
+        $subQuery = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ysi_items', 'i'))
+            ->where($db->quoteName('i.catid') . ' = ' . $db->quoteName('a.id'))
+            ->where($db->quoteName('i.published') . ' = 1')
+            ->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
 
-            if (isset($itemColumns['catid'])) {
-                $subQuery = $db->getQuery(true)
-                    ->select('COUNT(*)')
-                    ->from($db->quoteName('#__ysi_items', 'i'))
-                    ->where($db->quoteName('i.catid') . ' = ' . $db->quoteName('a.id'))
-                    ->where($db->quoteName('i.published') . ' = 1');
-
-                // Filter item counts by access level when the column exists.
-                if (isset($itemColumns['access'])) {
-                    $subQuery->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
-                }
-
-                $query->select('(' . $subQuery . ') AS ' . $db->quoteName('item_count'));
-            } else {
-                $query->select('0 AS ' . $db->quoteName('item_count'));
-            }
-        } catch (\RuntimeException $e) {
-            $query->select('0 AS ' . $db->quoteName('item_count'));
-        }
+        $query->select('(' . $subQuery . ') AS ' . $db->quoteName('item_count'));
 
         $db->setQuery($query);
 
@@ -139,43 +135,29 @@ class CategoryModel extends ListModel
     protected function getListQuery()
     {
         $catId = (int) $this->getState('category.id');
-        $db    = $this->getDatabase();
+        $db = $this->getDatabase();
         $query = $db->getQuery(true);
 
-        // Items in this category. The table may not exist yet (Phase 6 placeholder).
-        try {
-            $itemColumns = $db->getTableColumns('#__ysi_items', false);
+        $query->select($db->quoteName([
+            'i.id',
+            'i.name',
+            'i.alias',
+            'i.catid',
+            'i.published',
+            'i.ordering',
+        ]));
+        $query->from($db->quoteName('#__ysi_items', 'i'));
+        $query->where($db->quoteName('i.catid') . ' = :catid');
+        $query->where($db->quoteName('i.published') . ' = 1');
+        $query->bind(':catid', $catId, ParameterType::INTEGER);
 
-            if (!isset($itemColumns['catid'])) {
-                throw new \RuntimeException('Items table has no catid column');
-            }
+        // Access filter on items.
+        $user = Factory::getApplication()->getIdentity();
+        $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
 
-            $query->select($db->quoteName([
-                'i.id', 'i.name', 'i.alias', 'i.catid',
-                'i.published', 'i.ordering',
-            ]));
-            $query->from($db->quoteName('#__ysi_items', 'i'));
-            $query->where($db->quoteName('i.catid') . ' = :catid');
-            $query->where($db->quoteName('i.published') . ' = 1');
-            $query->bind(':catid', $catId, ParameterType::INTEGER);
-
-            // Access filter on items.
-            $user = Factory::getApplication()->getIdentity();
-
-            if (isset($itemColumns['access'])) {
-                $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
-            }
-
-            $orderCol  = $this->state->get('list.ordering', 'i.ordering');
-            $orderDirn = $this->state->get('list.direction', 'asc');
-            $query->order($db->escape($orderCol . ' ' . $orderDirn));
-        } catch (\RuntimeException $e) {
-            // Items table does not exist yet — return empty resultset.
-            $query->select('1 AS ' . $db->quoteName('id'));
-            $query->select($db->quote('') . ' AS ' . $db->quoteName('name'));
-            $query->from($db->quoteName('#__ysi_categories'));
-            $query->where('0 = 1');
-        }
+        $orderCol = $this->state->get('list.ordering', 'i.ordering');
+        $orderDirn = $this->state->get('list.direction', 'asc');
+        $query->order($db->escape($orderCol . ' ' . $orderDirn));
 
         return $query;
     }
