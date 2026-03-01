@@ -7,7 +7,7 @@
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <authorEmail>me@kayakshaver.com</authorEmail>
     <authorUrl>https://www.kayakshaver.com</authorUrl>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <description>COM_YSINVENTORY_XML_DESCRIPTION</description>
     <namespace path="src">YakShaver\Component\Ysinventory</namespace>
 
@@ -41,8 +41,15 @@
     <administration>
         <menu img="class:archive" link="option=com_ysinventory">COM_YSINVENTORY</menu>
         <submenu>
-            <menu link="option=com_ysinventory&amp;view=inventories" view="inventories" img="class:archive" alt="Ysinventory/Inventories">COM_YSINVENTORY_SUBMENU_INVENTORIES</menu>
-            <menu link="option=com_ysinventory&amp;view=categories" view="categories" img="class:folder" alt="Ysinventory/Categories">COM_YSINVENTORY_SUBMENU_CATEGORIES</menu>
+            <menu link="option=com_ysinventory&amp;view=inventories" view="inventories"
+                img="class:archive" alt="Ysinventory/Inventories">
+                COM_YSINVENTORY_SUBMENU_INVENTORIES</menu>
+            <menu link="option=com_ysinventory&amp;view=categories" view="categories"
+                img="class:folder" alt="Ysinventory/Categories">COM_YSINVENTORY_SUBMENU_CATEGORIES</menu>
+            <menu link="option=com_ysinventory&amp;view=brands" view="brands" img="class:bookmark"
+                alt="Ysinventory/Brands">COM_YSINVENTORY_SUBMENU_BRANDS</menu>
+            <menu link="option=com_ysinventory&amp;view=locations" view="locations"
+                img="class:location" alt="Ysinventory/Locations">COM_YSINVENTORY_SUBMENU_LOCATIONS</menu>
         </submenu>
         <files folder="admin">
             <filename>access.xml</filename>

@@ -27,9 +27,9 @@ class DisplayController extends BaseController
 
     public function display($cachable = false, $urlparams = [])
     {
-        $view   = $this->input->get('view', $this->default_view);
+        $view = $this->input->get('view', $this->default_view);
         $layout = $this->input->get('layout', 'default');
-        $id     = $this->input->getInt('id');
+        $id = $this->input->getInt('id');
 
         if ($view == 'inventory' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.inventory', $id)) {
             if (!\count($this->app->getMessageQueue())) {
@@ -47,6 +47,26 @@ class DisplayController extends BaseController
             }
 
             $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=categories', false));
+
+            return false;
+        }
+
+        if ($view == 'brand' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.brand', $id)) {
+            if (!\count($this->app->getMessageQueue())) {
+                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
+            }
+
+            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=brands', false));
+
+            return false;
+        }
+
+        if ($view == 'location' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.location', $id)) {
+            if (!\count($this->app->getMessageQueue())) {
+                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
+            }
+
+            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=locations', false));
 
             return false;
         }
