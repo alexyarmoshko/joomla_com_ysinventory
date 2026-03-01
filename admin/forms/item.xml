@@ -31,6 +31,8 @@
             label="COM_YSINVENTORY_FIELD_INVENTORY_LABEL"
             description="COM_YSINVENTORY_FIELD_INVENTORY_DESC"
             required="true"
+            key_field="value"
+            value_field="text"
             query="SELECT id AS value, name AS text FROM #__ysi_inventories WHERE published != -2 ORDER BY name"
         >
             <option value="">COM_YSINVENTORY_SELECT_INVENTORY</option>
@@ -42,6 +44,8 @@
             label="COM_YSINVENTORY_FIELD_CATEGORY_LABEL"
             description="COM_YSINVENTORY_FIELD_CATEGORY_DESC"
             required="true"
+            key_field="value"
+            value_field="text"
             query="SELECT id AS value, title AS text FROM #__ysi_categories WHERE published != -2 AND level > 0 ORDER BY lft"
         >
             <option value="">COM_YSINVENTORY_SELECT_CATEGORY</option>
@@ -53,6 +57,8 @@
             label="COM_YSINVENTORY_FIELD_BRAND_LABEL"
             description="COM_YSINVENTORY_FIELD_BRAND_DESC"
             required="true"
+            key_field="value"
+            value_field="text"
             query="SELECT id AS value, name AS text FROM #__ysi_brands WHERE published != -2 ORDER BY name"
         >
             <option value="">COM_YSINVENTORY_SELECT_BRAND</option>
@@ -146,6 +152,9 @@
             label="COM_YSINVENTORY_FIELD_TAGS_LABEL"
             description="COM_YSINVENTORY_FIELD_TAGS_DESC"
             multiple="true"
+            key_field="value"
+            value_field="text"
+            layout="joomla.form.field.list-fancy-select"
             query="SELECT t.id AS value, CONCAT(tg.name, ' — ', t.name) AS text FROM #__ysi_tags AS t INNER JOIN #__ysi_tag_groups AS tg ON tg.id = t.ysi_tag_group_id WHERE t.published = 1 AND tg.published = 1 ORDER BY tg.ordering, tg.name, t.ordering, t.name"
         />
     </fieldset>

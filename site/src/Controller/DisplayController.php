@@ -27,10 +27,18 @@ class DisplayController extends BaseController
 
     public function display($cachable = true, $urlparams = [])
     {
-        $urlparams['id']     = 'INT';
-        $urlparams['catid']  = 'INT';
-        $urlparams['view']   = 'CMD';
+        $urlparams['id'] = 'INT';
+        $urlparams['catid'] = 'INT';
+        $urlparams['view'] = 'CMD';
         $urlparams['layout'] = 'CMD';
+        $urlparams['search'] = 'STRING';
+        $urlparams['inventory'] = 'INT';
+        $urlparams['brand'] = 'INT';
+        $urlparams['tag'] = 'INT';
+        $urlparams['location'] = 'INT';
+        $urlparams['start'] = 'INT';
+        $urlparams['limitstart'] = 'INT';
+        $urlparams['limit'] = 'INT';
 
         return parent::display($cachable, $urlparams);
     }

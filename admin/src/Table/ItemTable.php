@@ -148,13 +148,14 @@ class ItemTable extends Table implements CurrentUserInterface
             return false;
         }
 
-        // Validate that referenced category exists and is not trashed.
+        // Validate that referenced category exists, is not trashed, and is not a root category.
         $catId = (int) $this->catid;
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from($db->quoteName('#__ysi_categories'))
             ->where($db->quoteName('id') . ' = :catId')
             ->where($db->quoteName('published') . ' != -2')
+            ->where($db->quoteName('level') . ' > 0')
             ->bind(':catId', $catId, ParameterType::INTEGER);
         $db->setQuery($query);
 

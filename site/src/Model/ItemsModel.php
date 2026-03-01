@@ -190,56 +190,72 @@ class ItemsModel extends ListModel
     public function getFilterOptions()
     {
         $db = $this->getDatabase();
+        $user = Factory::getApplication()->getIdentity();
+        $viewLevels = $user->getAuthorisedViewLevels();
         $options = [];
 
-        // Categories (only those with published items).
+        // Categories (only those with at least one accessible published item).
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['c.id', 'c.title']))
+            ->select('DISTINCT ' . $db->quoteName('c.id') . ', ' . $db->quoteName('c.title'))
             ->from($db->quoteName('#__ysi_categories', 'c'))
+            ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.catid') . ' = ' . $db->quoteName('c.id'))
             ->where($db->quoteName('c.published') . ' = 1')
             ->where($db->quoteName('c.level') . ' > 0')
+            ->where($db->quoteName('i.published') . ' = 1')
+            ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order($db->quoteName('c.lft'));
         $db->setQuery($query);
         $options['categories'] = $db->loadObjectList() ?: [];
 
-        // Inventories.
+        // Inventories (only those with at least one accessible published item).
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['id', 'name']))
-            ->from($db->quoteName('#__ysi_inventories'))
-            ->where($db->quoteName('published') . ' = 1')
-            ->order($db->quoteName('name'));
+            ->select('DISTINCT ' . $db->quoteName('inv.id') . ', ' . $db->quoteName('inv.name'))
+            ->from($db->quoteName('#__ysi_inventories', 'inv'))
+            ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.ysi_inventory_id') . ' = ' . $db->quoteName('inv.id'))
+            ->where($db->quoteName('inv.published') . ' = 1')
+            ->where($db->quoteName('i.published') . ' = 1')
+            ->whereIn($db->quoteName('i.access'), $viewLevels)
+            ->order($db->quoteName('inv.name'));
         $db->setQuery($query);
         $options['inventories'] = $db->loadObjectList() ?: [];
 
-        // Brands.
+        // Brands (only those with at least one accessible published item).
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['id', 'name']))
-            ->from($db->quoteName('#__ysi_brands'))
-            ->where($db->quoteName('published') . ' = 1')
-            ->order($db->quoteName('name'));
+            ->select('DISTINCT ' . $db->quoteName('br.id') . ', ' . $db->quoteName('br.name'))
+            ->from($db->quoteName('#__ysi_brands', 'br'))
+            ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.brand_id') . ' = ' . $db->quoteName('br.id'))
+            ->where($db->quoteName('br.published') . ' = 1')
+            ->where($db->quoteName('i.published') . ' = 1')
+            ->whereIn($db->quoteName('i.access'), $viewLevels)
+            ->order($db->quoteName('br.name'));
         $db->setQuery($query);
         $options['brands'] = $db->loadObjectList() ?: [];
 
-        // Tags (with group name prefix).
+        // Tags (with group name prefix, only those assigned to at least one accessible published item).
         $query = $db->getQuery(true)
             ->select([
-                $db->quoteName('t.id'),
+                'DISTINCT ' . $db->quoteName('t.id'),
                 'CONCAT(' . $db->quoteName('tg.name') . ', ' . $db->quote(' — ') . ', ' . $db->quoteName('t.name') . ') AS ' . $db->quoteName('name'),
             ])
             ->from($db->quoteName('#__ysi_tags', 't'))
             ->join('INNER', $db->quoteName('#__ysi_tag_groups', 'tg') . ' ON ' . $db->quoteName('tg.id') . ' = ' . $db->quoteName('t.ysi_tag_group_id'))
+            ->join('INNER', $db->quoteName('#__ysi_item_tag_map', 'itm') . ' ON ' . $db->quoteName('itm.ysi_tag_id') . ' = ' . $db->quoteName('t.id'))
+            ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.id') . ' = ' . $db->quoteName('itm.ysi_item_id'))
             ->where($db->quoteName('t.published') . ' = 1')
             ->where($db->quoteName('tg.published') . ' = 1')
+            ->where($db->quoteName('i.published') . ' = 1')
+            ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order([$db->quoteName('tg.ordering'), $db->quoteName('tg.name'), $db->quoteName('t.ordering'), $db->quoteName('t.name')]);
         $db->setQuery($query);
         $options['tags'] = $db->loadObjectList() ?: [];
 
-        // Location users (only those assigned to items).
+        // Location users (only those assigned to at least one accessible published item).
         $query = $db->getQuery(true)
             ->select('DISTINCT ' . $db->quoteName('u.id') . ', ' . $db->quoteName('u.name'))
             ->from($db->quoteName('#__users', 'u'))
             ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.ysi_location_user_id') . ' = ' . $db->quoteName('u.id'))
             ->where($db->quoteName('i.published') . ' = 1')
+            ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order($db->quoteName('u.name'));
         $db->setQuery($query);
         $options['locations'] = $db->loadObjectList() ?: [];

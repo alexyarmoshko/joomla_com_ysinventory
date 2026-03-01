@@ -37,28 +37,21 @@ $wa->useScript('keepalive')
         <?php echo HTMLHelper::_('uitab.addTab', 'myTab', 'details', empty($this->item->id) ? Text::_('COM_YSINVENTORY_ITEM_NEW') : Text::_('COM_YSINVENTORY_ITEM_EDIT')); ?>
         <div class="row">
             <div class="col-lg-9">
-                <?php echo $this->form->renderField('ysi_inventory_id'); ?>
                 <?php echo $this->form->renderField('catid'); ?>
                 <?php echo $this->form->renderField('brand_id'); ?>
-                <?php echo $this->form->renderField('ysi_location_user_id'); ?>
-                <?php echo $this->form->renderField('image'); ?>
                 <?php echo $this->form->renderField('ysi_model'); ?>
-                <?php echo $this->form->renderField('ysi_serial_number'); ?>
-                <?php echo $this->form->renderField('ysi_sku'); ?>
-                <?php echo $this->form->renderField('ysi_quantity'); ?>
+                <?php echo $this->form->renderField('ysi_tags'); ?>
                 <?php echo $this->form->renderField('description'); ?>
             </div>
             <div class="col-lg-3">
+                <?php echo $this->form->renderField('image'); ?>
                 <?php echo $this->form->renderField('published'); ?>
+                <?php echo $this->form->renderField('ysi_inventory_id'); ?>
+                <?php echo $this->form->renderField('ysi_location_user_id'); ?>
+                <?php echo $this->form->renderField('ysi_serial_number'); ?>
+                <?php echo $this->form->renderField('ysi_sku'); ?>
+                <?php echo $this->form->renderField('ysi_quantity'); ?>
                 <?php echo $this->form->renderField('ordering'); ?>
-            </div>
-        </div>
-        <?php echo HTMLHelper::_('uitab.endTab'); ?>
-
-        <?php echo HTMLHelper::_('uitab.addTab', 'myTab', 'tags', Text::_('COM_YSINVENTORY_FIELDSET_TAGS')); ?>
-        <div class="row">
-            <div class="col-md-12">
-                <?php echo $this->form->renderField('ysi_tags', 'tags'); ?>
             </div>
         </div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>

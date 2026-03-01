@@ -25,6 +25,8 @@
             label="COM_YSINVENTORY_FIELD_INVENTORY_LABEL"
             class="js-select-submit-on-change"
             query="SELECT id AS value, name AS text FROM #__ysi_inventories WHERE published != -2 ORDER BY name"
+            key_field="value"
+            value_field="text"
         >
             <option value="">COM_YSINVENTORY_SELECT_INVENTORY</option>
         </field>
@@ -35,6 +37,8 @@
             label="COM_YSINVENTORY_FIELD_BRAND_LABEL"
             class="js-select-submit-on-change"
             query="SELECT id AS value, name AS text FROM #__ysi_brands WHERE published != -2 ORDER BY name"
+            key_field="value"
+            value_field="text"
         >
             <option value="">COM_YSINVENTORY_SELECT_BRAND</option>
         </field>
@@ -45,6 +49,8 @@
             label="COM_YSINVENTORY_FIELD_CATEGORY_LABEL"
             class="js-select-submit-on-change"
             query="SELECT id AS value, title AS text FROM #__ysi_categories WHERE published != -2 AND level > 0 ORDER BY lft"
+            key_field="value"
+            value_field="text"
         >
             <option value="">COM_YSINVENTORY_SELECT_CATEGORY</option>
         </field>
