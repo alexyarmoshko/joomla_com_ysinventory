@@ -66,25 +66,31 @@ class ItemModel extends BaseDatabaseModel
         $user = Factory::getApplication()->getIdentity();
         $query->whereIn($db->quoteName('a.access'), $user->getAuthorisedViewLevels());
 
-        // Join inventory name.
+        // Join inventory name (only published).
         $query->select($db->quoteName('inv.name', 'inventory_name'))
             ->join(
                 'LEFT',
-                $db->quoteName('#__ysi_inventories', 'inv') . ' ON ' . $db->quoteName('inv.id') . ' = ' . $db->quoteName('a.ysi_inventory_id')
+                $db->quoteName('#__ysi_inventories', 'inv')
+                . ' ON ' . $db->quoteName('inv.id') . ' = ' . $db->quoteName('a.ysi_inventory_id')
+                . ' AND ' . $db->quoteName('inv.published') . ' = 1'
             );
 
-        // Join category title.
+        // Join category title (only published).
         $query->select($db->quoteName('cat.title', 'category_title'))
             ->join(
                 'LEFT',
-                $db->quoteName('#__ysi_categories', 'cat') . ' ON ' . $db->quoteName('cat.id') . ' = ' . $db->quoteName('a.catid')
+                $db->quoteName('#__ysi_categories', 'cat')
+                . ' ON ' . $db->quoteName('cat.id') . ' = ' . $db->quoteName('a.catid')
+                . ' AND ' . $db->quoteName('cat.published') . ' = 1'
             );
 
-        // Join brand name.
+        // Join brand name (only published).
         $query->select($db->quoteName('br.name', 'brand_name'))
             ->join(
                 'LEFT',
-                $db->quoteName('#__ysi_brands', 'br') . ' ON ' . $db->quoteName('br.id') . ' = ' . $db->quoteName('a.brand_id')
+                $db->quoteName('#__ysi_brands', 'br')
+                . ' ON ' . $db->quoteName('br.id') . ' = ' . $db->quoteName('a.brand_id')
+                . ' AND ' . $db->quoteName('br.published') . ' = 1'
             );
 
         // Join location user name.

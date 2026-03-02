@@ -130,7 +130,7 @@ class ItemTable extends Table implements CurrentUserInterface
             return false;
         }
 
-        // Validate that referenced inventory exists and is not trashed.
+        // Validate that referenced inventory exists and is published.
         $db = $this->getDatabase();
 
         $invId = (int) $this->ysi_inventory_id;
@@ -138,7 +138,7 @@ class ItemTable extends Table implements CurrentUserInterface
             ->select('COUNT(*)')
             ->from($db->quoteName('#__ysi_inventories'))
             ->where($db->quoteName('id') . ' = :invId')
-            ->where($db->quoteName('published') . ' != -2')
+            ->where($db->quoteName('published') . ' = 1')
             ->bind(':invId', $invId, ParameterType::INTEGER);
         $db->setQuery($query);
 
@@ -148,13 +148,13 @@ class ItemTable extends Table implements CurrentUserInterface
             return false;
         }
 
-        // Validate that referenced category exists, is not trashed, and is not a root category.
+        // Validate that referenced category exists, is published, and is not a root category.
         $catId = (int) $this->catid;
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from($db->quoteName('#__ysi_categories'))
             ->where($db->quoteName('id') . ' = :catId')
-            ->where($db->quoteName('published') . ' != -2')
+            ->where($db->quoteName('published') . ' = 1')
             ->where($db->quoteName('level') . ' > 0')
             ->bind(':catId', $catId, ParameterType::INTEGER);
         $db->setQuery($query);
@@ -165,13 +165,13 @@ class ItemTable extends Table implements CurrentUserInterface
             return false;
         }
 
-        // Validate that referenced brand exists and is not trashed.
+        // Validate that referenced brand exists and is published.
         $brandId = (int) $this->brand_id;
         $query = $db->getQuery(true)
             ->select('COUNT(*)')
             ->from($db->quoteName('#__ysi_brands'))
             ->where($db->quoteName('id') . ' = :brandId')
-            ->where($db->quoteName('published') . ' != -2')
+            ->where($db->quoteName('published') . ' = 1')
             ->bind(':brandId', $brandId, ParameterType::INTEGER);
         $db->setQuery($query);
 

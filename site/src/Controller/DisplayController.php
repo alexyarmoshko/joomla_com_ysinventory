@@ -23,7 +23,7 @@ class DisplayController extends BaseController
      *
      * @var string
      */
-    protected $default_view = 'ysinventory';
+    protected $default_view = 'items';
 
     public function display($cachable = true, $urlparams = [])
     {

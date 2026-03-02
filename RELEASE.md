@@ -1,11 +1,11 @@
 # Release Notes
 
-## v1.0.0 (in progress)
+## v1.0.5 (in progress)
 
 ### Phase 1 — Bootstrap and installability baseline
 
 - Component scaffold with Joomla 5 MVC architecture (namespaced, DI-wired)
-- Root manifest (`ysinventory.xml`) v1.0.0
+- Root manifest (`ysinventory.xml`)
 - Service provider with MVCFactory and ComponentDispatcherFactory
 - Extension class (`YsinventoryComponent`) extending `MVCComponent`
 - Admin dashboard view with toolbar
@@ -14,13 +14,53 @@
 - SQL install/uninstall scripts and schema version baseline
 - ACL `access.xml` with standard Joomla component actions
 - Makefile for repeatable build packaging
-- Installation artifact: `installation/com_ysinventory-v1-0-0.zip`
 
-### Phase 2 - Inventory entity admin CRUD
+### Phase 2 — Inventory entity admin CRUD
 
 - `#__ysi_inventories` table with name, alias, description, inventory owner reference, published state, ordering, and timestamps
 - Full admin CRUD: Table class, AdminModel, ListModel, FormController, AdminController
 - Admin list view with search, status filter, drag ordering, pagination, and empty state
 - Admin edit form with tabbed layout (details: name/alias/owner/description, publishing: dates/created-by)
 - Submenu entry for Inventories
-- Inventory owner now supports logical XOR: exactly one of Joomla `user` or Joomla `contact`
+- Inventory owner supports logical XOR: exactly one of Joomla `user` or Joomla `contact`
+
+### Phase 3 — Component-local category subsystem
+
+- `#__ysi_categories` table with nested-set hierarchy (parent_id, lft, rgt, level, path), asset-based Joomla ACL, access level, metadata, and audit fields
+- Admin CRUD with hierarchy-aware form (parent selector, indented list view, drag ordering, rebuild action)
+- Per-category ACL permissions (create, delete, edit, edit.state, edit.own) via `access.xml`
+- CategoryTable extending `Joomla\CMS\Table\Nested` with asset management and descendant path rebuild
+- Frontend category list with per-category item counts and category-to-item click-through navigation
+- Breadcrumb support for category hierarchy on frontend views
+
+### Phase 4 — Brands
+
+- `#__ysi_brands` table with name, alias, description (editor), image (media picker), published state, ordering, and timestamps
+- Full admin CRUD with brand list (image thumbnails) and edit form (tabbed layout)
+- Frontend brand list with per-brand item counts and brand-to-item click-through navigation
+- Single brand view with heading, image, description, and item listing
+
+### Phase 5 — Tag groups and tags
+
+- `#__ysi_tag_groups` and `#__ysi_tags` tables with group-tag relationship (each tag belongs to one group)
+- Admin CRUD for both tag groups and tags with search, filters, and ordering
+- Tag form fields: name, alias, description (Joomla editor)
+- Frontend grouped tag list with per-tag item counts and tag-to-item click-through navigation
+- Single tag view with tag heading and item listing
+
+### Phase 6 — Items and catalog browsing
+
+- `#__ysi_items` table with name, alias, description, image, model, serial number, SKU, quantity, and FK references to inventory, category, brand, and location (Joomla user)
+- `#__ysi_item_tag_map` many-to-many join table for item-tag associations
+- Full admin CRUD with item list (search, filters, ordering, pagination) and tabbed edit form (details, tags, publishing)
+- Multi-select tag picker in admin item form (grouped by tag group)
+- Frontend item list with pagination, items-per-page selector, and filters (category, inventory, tag, location, brand)
+- Frontend item detail page with image, description, metadata table (model, serial number, SKU, quantity, brand, category, inventory, location), and associated tags
+- Access-level filtering on all frontend item queries
+
+### Cross-phase — Frontend menu integration
+
+- Menu item metadata XML for all 8 frontend views (brands, brand, categories, category, tags, tag, items, item)
+- Joomla Menu Manager integration with view-specific menu item types and ID selectors for single-entity views
+- Site default view set to items catalog for proper fallback routing
+- Menu type language keys for titles, options, and descriptions

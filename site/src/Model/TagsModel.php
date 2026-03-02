@@ -98,10 +98,10 @@ class TagsModel extends ListModel
                 ->join(
                     'INNER',
                     $db->quoteName('#__ysi_items', 'i')
-                    . ' ON ' . $db->quoteName('i.id') . ' = ' . $db->quoteName('itm.item_id')
+                    . ' ON ' . $db->quoteName('i.id') . ' = ' . $db->quoteName('itm.ysi_item_id')
                     . ' AND ' . $db->quoteName('i.published') . ' = 1'
                 )
-                ->where($db->quoteName('itm.tag_id') . ' = ' . $db->quoteName('a.id'));
+                ->where($db->quoteName('itm.ysi_tag_id') . ' = ' . $db->quoteName('a.id'));
 
             // Access filter on items.
             $itemColumns = $db->getTableColumns('#__ysi_items', false);

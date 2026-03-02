@@ -87,7 +87,7 @@ $item = $this->item;
                         <?php echo Text::_('COM_YSINVENTORY_FIELD_BRAND_LABEL'); ?>
                     </th>
                     <td>
-                        <?php if (!empty($item->brand_id)): ?>
+                        <?php if (!empty($item->brand_id) && !empty($item->brand_name)): ?>
                             <a
                                 href="<?php echo Route::_('index.php?option=com_ysinventory&view=brand&id=' . (int) $item->brand_id); ?>">
                                 <?php echo $this->escape($item->brand_name); ?>
@@ -101,7 +101,7 @@ $item = $this->item;
                         <?php echo Text::_('COM_YSINVENTORY_FIELD_CATEGORY_LABEL'); ?>
                     </th>
                     <td>
-                        <?php if (!empty($item->catid)): ?>
+                        <?php if (!empty($item->catid) && !empty($item->category_title)): ?>
                             <a
                                 href="<?php echo Route::_('index.php?option=com_ysinventory&view=category&id=' . (int) $item->catid); ?>">
                                 <?php echo $this->escape($item->category_title); ?>
