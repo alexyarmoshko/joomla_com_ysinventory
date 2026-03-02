@@ -1,6 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <fieldset
+        name="lending"
+        label="COM_YSINVENTORY_CONFIG_LENDING_LABEL"
+    >
+        <field
+            name="ysi_lend_request_groups"
+            type="usergrouplist"
+            label="COM_YSINVENTORY_CONFIG_LEND_REQUEST_GROUPS_LABEL"
+            description="COM_YSINVENTORY_CONFIG_LEND_REQUEST_GROUPS_DESC"
+            multiple="true"
+            layout="joomla.form.field.list-fancy-select"
+        />
+
+        <field
+            name="ysi_lend_moderation_groups"
+            type="usergrouplist"
+            label="COM_YSINVENTORY_CONFIG_LEND_MODERATION_GROUPS_LABEL"
+            description="COM_YSINVENTORY_CONFIG_LEND_MODERATION_GROUPS_DESC"
+            multiple="true"
+            layout="joomla.form.field.list-fancy-select"
+        />
+    </fieldset>
+
+    <fieldset
         name="permissions"
         label="JCONFIG_PERMISSIONS_LABEL"
     >

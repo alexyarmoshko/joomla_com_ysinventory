@@ -12,6 +12,7 @@
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
@@ -130,6 +131,45 @@ $item = $this->item;
             </tbody>
         </table>
     </div>
+
+    <?php if ($this->canRequestLend): ?>
+        <div class="com-ysinventory-item__lend-request mt-4">
+            <h3>
+                <?php echo Text::_('COM_YSINVENTORY_LEND_REQUEST_TITLE'); ?>
+            </h3>
+            <p class="text-muted">
+                <?php echo Text::sprintf('COM_YSINVENTORY_LEND_AVAILABLE_STOCK', (int) $item->available_stock, (int) $item->ysi_quantity); ?>
+            </p>
+            <form action="<?php echo Route::_('index.php?option=com_ysinventory&task=lend.request'); ?>" method="post"
+                class="row g-3">
+                <input type="hidden" name="ysi_item_id" value="<?php echo (int) $item->id; ?>">
+                <div class="col-md-3">
+                    <label for="ysi_from" class="form-label">
+                        <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_FROM_LABEL'); ?>
+                    </label>
+                    <input type="date" class="form-control" id="ysi_from" name="ysi_from" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="ysi_to" class="form-label">
+                        <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_TO_LABEL'); ?>
+                    </label>
+                    <input type="date" class="form-control" id="ysi_to" name="ysi_to" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="ysi_note" class="form-label">
+                        <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_NOTE_LABEL'); ?>
+                    </label>
+                    <textarea class="form-control" id="ysi_note" name="ysi_note" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <?php echo Text::_('COM_YSINVENTORY_LEND_REQUEST_SUBMIT'); ?>
+                    </button>
+                </div>
+                <?php echo HTMLHelper::_('form.token'); ?>
+            </form>
+        </div>
+    <?php endif; ?>
 
     <?php if (!empty($item->tags)): ?>
         <div class="com-ysinventory-item__tags mt-3">

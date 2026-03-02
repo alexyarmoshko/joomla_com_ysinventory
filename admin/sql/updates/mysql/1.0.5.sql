@@ -1,0 +1,1 @@
+-- v1.0.5: No schema changes (frontend view metadata and code review fixes only)

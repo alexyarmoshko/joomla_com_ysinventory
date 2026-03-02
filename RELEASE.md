@@ -1,6 +1,6 @@
 # Release Notes
 
-## v1.0.5 (in progress)
+## v1.0.6 (in progress)
 
 ### Phase 1 — Bootstrap and installability baseline
 
@@ -57,6 +57,18 @@
 - Frontend item list with pagination, items-per-page selector, and filters (category, inventory, tag, location, brand)
 - Frontend item detail page with image, description, metadata table (model, serial number, SKU, quantity, brand, category, inventory, location), and associated tags
 - Access-level filtering on all frontend item queries
+
+### Phase 7 — Lending workflow
+
+- `#__ysi_lends` table with item FK, user reference, from/to dates, note, status (Requested/Borrowed/Returned/Lost), and audit fields
+- Full admin CRUD: LendTable with status transition enforcement (Requested->Borrowed->Returned|Lost) and stock guard on Borrowed transition
+- Admin list view with colored status badges (warning/primary/success/danger), item name, requester, date range, and creation date
+- Admin edit form with tabbed layout (details: item selector, user picker, note, status, dates; publishing: audit fields)
+- Component configuration for lending: request groups and moderation groups (usergrouplist, multi-select)
+- Lend ACL section in `access.xml` (core.create, core.delete, core.edit, core.edit.state)
+- Site-side lend request controller with CSRF, login, group, item, date, and stock validation
+- Frontend item detail page shows available stock and conditional lend request form for authorized users
+- Stock guard prevents approving borrows when all units are lent out
 
 ### Cross-phase — Frontend menu integration
 

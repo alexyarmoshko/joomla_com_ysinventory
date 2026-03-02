@@ -91,6 +91,16 @@ class DisplayController extends BaseController
             return false;
         }
 
+        if ($view == 'lend' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.lend', $id)) {
+            if (!\count($this->app->getMessageQueue())) {
+                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
+            }
+
+            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=lends', false));
+
+            return false;
+        }
+
         return parent::display();
     }
 }

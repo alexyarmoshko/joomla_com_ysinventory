@@ -103,6 +103,24 @@ class ItemModel extends BaseDatabaseModel
         $db->setQuery($query);
         $this->item = $db->loadObject();
 
+        // Count active borrowed lends for stock availability.
+        if ($this->item) {
+            try {
+                $query = $db->getQuery(true)
+                    ->select('COUNT(*)')
+                    ->from($db->quoteName('#__ysi_lends'))
+                    ->where($db->quoteName('ysi_item_id') . ' = :lendItemId')
+                    ->where($db->quoteName('ysi_status') . ' = 2')
+                    ->bind(':lendItemId', $this->item->id, ParameterType::INTEGER);
+                $db->setQuery($query);
+                $this->item->borrowed_count = (int) $db->loadResult();
+            } catch (\Exception $e) {
+                $this->item->borrowed_count = 0;
+            }
+
+            $this->item->available_stock = max(0, (int) $this->item->ysi_quantity - $this->item->borrowed_count);
+        }
+
         // Load associated tags with group names.
         if ($this->item) {
             $query = $db->getQuery(true)

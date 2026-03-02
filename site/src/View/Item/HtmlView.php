@@ -14,6 +14,7 @@ namespace YakShaver\Component\Ysinventory\Site\View\Item;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\GenericDataException;
@@ -22,6 +23,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 class HtmlView extends BaseHtmlView
 {
     protected $item;
+    public $canRequestLend = false;
 
     public function display($tpl = null)
     {
@@ -31,6 +33,22 @@ class HtmlView extends BaseHtmlView
 
         if ($this->item === false) {
             throw new GenericDataException(Text::_('COM_YSINVENTORY_ERROR_ITEM_NOT_FOUND'), 404);
+        }
+
+        // Determine whether the current user can submit a lend request.
+        $user = Factory::getApplication()->getIdentity();
+
+        if (!$user->guest && $this->item) {
+            $params = ComponentHelper::getParams('com_ysinventory');
+            $requestGroups = (array) $params->get('ysi_lend_request_groups', []);
+
+            if (!empty($requestGroups)) {
+                $userGroups = $user->getAuthorisedGroups();
+
+                if (!empty(array_intersect($userGroups, $requestGroups)) && ($this->item->available_stock ?? 0) > 0) {
+                    $this->canRequestLend = true;
+                }
+            }
         }
 
         $this->prepareBreadcrumbs();

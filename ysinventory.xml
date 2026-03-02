@@ -7,7 +7,7 @@
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <authorEmail>me@kayakshaver.com</authorEmail>
     <authorUrl>https://www.kayakshaver.com</authorUrl>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <description>COM_YSINVENTORY_XML_DESCRIPTION</description>
     <namespace path="src">YakShaver\Component\Ysinventory</namespace>
 
@@ -54,6 +54,8 @@
                 alt="Ysinventory/Tags">COM_YSINVENTORY_SUBMENU_TAGS</menu>
             <menu link="option=com_ysinventory&amp;view=items" view="items" img="class:cube"
                 alt="Ysinventory/Items">COM_YSINVENTORY_SUBMENU_ITEMS</menu>
+            <menu link="option=com_ysinventory&amp;view=lends" view="lends" img="class:list-2"
+                alt="Ysinventory/Lends">COM_YSINVENTORY_SUBMENU_LENDS</menu>
         </submenu>
         <files folder="admin">
             <filename>access.xml</filename>
