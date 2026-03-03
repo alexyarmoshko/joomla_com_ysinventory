@@ -72,7 +72,7 @@ if ($saveOrder && !empty($this->items)) {
                                     <?php echo HTMLHelper::_('searchtools.sort', 'JSTATUS', 'a.published', $listDirn, $listOrder); ?>
                                 </th>
                                 <th scope="col">
-                                    <?php echo HTMLHelper::_('searchtools.sort', 'COM_YSINVENTORY_FIELD_NAME_LABEL', 'a.name', $listDirn, $listOrder); ?>
+                                    <?php echo HTMLHelper::_('searchtools.sort', 'COM_YSINVENTORY_FIELD_ASSET_NAME_LABEL', 'a.name', $listDirn, $listOrder); ?>
                                 </th>
                                 <th scope="col" class="w-15 d-none d-md-table-cell">
                                     <?php echo Text::_('COM_YSINVENTORY_FIELD_INVENTORY_LABEL'); ?>

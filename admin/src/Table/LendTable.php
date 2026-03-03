@@ -34,9 +34,9 @@ class LendTable extends Table implements CurrentUserInterface
 
     /** @var array Valid status transitions: old => [allowed new statuses] */
     private const TRANSITIONS = [
-        0 => [1],        // new record => Requested
-        1 => [2],        // Requested => On Loan
-        2 => [3, 4],     // On Loan => Returned | Lost
+        0 => [1],            // new record => Requested
+        1 => [2],            // Requested => On Loan
+        2 => [3, 4, 5, 6],  // On Loan => Returned | Lost | Returned Damaged | Returned Overdue
     ];
 
     public function __construct(DatabaseInterface $db, ?DispatcherInterface $dispatcher = null)
@@ -48,7 +48,7 @@ class LendTable extends Table implements CurrentUserInterface
 
     public function store($updateNulls = true)
     {
-        $date   = Factory::getDate()->toSql();
+        $date = Factory::getDate()->toSql();
         $userId = $this->getCurrentUser()->id;
 
         if (!(int) $this->created) {
@@ -57,7 +57,7 @@ class LendTable extends Table implements CurrentUserInterface
 
         if ($this->id) {
             $this->modified_by = $userId;
-            $this->modified    = $date;
+            $this->modified = $date;
         } else {
             if (empty($this->created_by)) {
                 $this->created_by = $userId;
@@ -80,7 +80,7 @@ class LendTable extends Table implements CurrentUserInterface
         }
 
         // Transactional stock guard with row-level lock (Finding 7).
-        $db     = $this->getDatabase();
+        $db = $this->getDatabase();
         $itemId = (int) $this->ysi_item_id;
         $lendId = (int) $this->id;
 
@@ -170,7 +170,7 @@ class LendTable extends Table implements CurrentUserInterface
         }
 
         $fromDate = \DateTimeImmutable::createFromFormat('Y-m-d', $this->ysi_from);
-        $toDate   = \DateTimeImmutable::createFromFormat('Y-m-d', $this->ysi_to);
+        $toDate = \DateTimeImmutable::createFromFormat('Y-m-d', $this->ysi_to);
 
         if (!$fromDate || $fromDate->format('Y-m-d') !== $this->ysi_from) {
             $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'));
@@ -193,7 +193,7 @@ class LendTable extends Table implements CurrentUserInterface
         // Status validation.
         $status = (int) $this->ysi_status;
 
-        if (!\in_array($status, [1, 2, 3, 4], true)) {
+        if (!\in_array($status, [1, 2, 3, 4, 5, 6], true)) {
             $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_STATUS'));
 
             return false;
