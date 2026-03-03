@@ -1,7 +1,10 @@
 <?php
 
 /**
- * Yak Shaver Inventory — site lend request controller
+ * Yak Shaver Inventory — site lend controller
+ *
+ * Handles both loan-request submissions from item pages (request task)
+ * and moderator CRUD via the frontend loans management view (save, cancel, add, edit).
  *
  * @package     YakShaver\Component\Ysinventory
  * @subpackage  Site
@@ -17,14 +20,53 @@ namespace YakShaver\Component\Ysinventory\Site\Controller;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 
-class LendController extends BaseController
+class LendController extends FormController
 {
+    /**
+     * The URL view list variable.
+     *
+     * @var string
+     */
+    protected $view_list = 'lends';
+
+    /**
+     * Check whether the user is allowed to add a new loan record.
+     *
+     * @param   array  $data  An array of input data.
+     *
+     * @return  bool
+     */
+    protected function allowAdd($data = [])
+    {
+        return $this->isModerator();
+    }
+
+    /**
+     * Check whether the user is allowed to edit a loan record.
+     *
+     * @param   array   $data  An array of input data.
+     * @param   string  $key   The name of the key for the primary key; default is id.
+     *
+     * @return  bool
+     */
+    protected function allowEdit($data = [], $key = 'id')
+    {
+        return $this->isModerator();
+    }
+
+    /**
+     * Submit a loan request from the item detail page.
+     *
+     * This is the original request flow kept intact.
+     *
+     * @return  bool
+     */
     public function request()
     {
         // CSRF check.
@@ -35,7 +77,7 @@ class LendController extends BaseController
             return false;
         }
 
-        $app  = Factory::getApplication();
+        $app = Factory::getApplication();
         $user = $app->getIdentity();
 
         // Must be logged in.
@@ -47,16 +89,16 @@ class LendController extends BaseController
         }
 
         // Extract input.
-        $input  = $app->getInput();
+        $input = $app->getInput();
         $itemId = $input->getInt('ysi_item_id', 0);
-        $from   = $input->getString('ysi_from', '');
-        $to     = $input->getString('ysi_to', '');
-        $note   = $input->getString('ysi_note', '');
+        $from = $input->getString('ysi_from', '');
+        $to = $input->getString('ysi_to', '');
+        $note = $input->getString('ysi_note', '');
 
         $returnUrl = Route::_('index.php?option=com_ysinventory&view=item&id=' . $itemId, false);
 
         // Load item with access and catid.
-        $db    = Factory::getContainer()->get('DatabaseDriver');
+        $db = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
             ->select($db->quoteName(['id', 'ysi_quantity', 'access', 'catid']))
             ->from($db->quoteName('#__ysi_items'))
@@ -83,7 +125,7 @@ class LendController extends BaseController
 
         // Category-level auth with fallback to component params (Findings 1+2).
         $componentParams = ComponentHelper::getParams('com_ysinventory');
-        $catParams       = new Registry('{}');
+        $catParams = new Registry('{}');
 
         if ((int) $item->catid > 0) {
             $catQuery = $db->getQuery(true)
@@ -130,7 +172,7 @@ class LendController extends BaseController
         }
 
         $fromDate = \DateTimeImmutable::createFromFormat('Y-m-d', $from);
-        $toDate   = \DateTimeImmutable::createFromFormat('Y-m-d', $to);
+        $toDate = \DateTimeImmutable::createFromFormat('Y-m-d', $to);
 
         if (!$fromDate || $fromDate->format('Y-m-d') !== $from) {
             $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'), 'error');
@@ -177,10 +219,10 @@ class LendController extends BaseController
         $data = [
             'ysi_item_id' => $itemId,
             'ysi_user_id' => $user->id,
-            'ysi_from'    => $from,
-            'ysi_to'      => $to,
-            'ysi_note'    => $note,
-            'ysi_status'  => 1,
+            'ysi_from' => $from,
+            'ysi_to' => $to,
+            'ysi_note' => $note,
+            'ysi_status' => 1,
         ];
 
         if (!$table->bind($data) || !$table->check() || !$table->store()) {
@@ -194,5 +236,36 @@ class LendController extends BaseController
         $this->setRedirect($returnUrl);
 
         return true;
+    }
+
+    /**
+     * Check whether the current user belongs to a configured moderation group.
+     *
+     * @return  bool
+     */
+    private function isModerator()
+    {
+        $user = Factory::getApplication()->getIdentity();
+
+        if ($user->guest) {
+            return false;
+        }
+
+        if ($user->authorise('core.edit', 'com_ysinventory')) {
+            return true;
+        }
+
+        $moderationGroups = (array) ComponentHelper::getParams('com_ysinventory')
+            ->get('ysi_lend_moderation_groups', []);
+
+        if (!empty($moderationGroups)) {
+            $userGroups = $user->getAuthorisedGroups();
+
+            if (!empty(array_intersect($userGroups, $moderationGroups))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

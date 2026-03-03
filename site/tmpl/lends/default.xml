@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <layout title="COM_YSINVENTORY_LENDS_VIEW_DEFAULT_TITLE"
+        option="COM_YSINVENTORY_LENDS_VIEW_DEFAULT_OPTION">
+        <message>
+            <![CDATA[COM_YSINVENTORY_LENDS_VIEW_DEFAULT_DESC]]>
+        </message>
+    </layout>
+
+    <fields name="params">
+        <fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC">
+        </fieldset>
+    </fields>
+</metadata>

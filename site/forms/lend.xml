@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+    <fieldset>
+        <field
+            name="id"
+            type="text"
+            label="JGLOBAL_FIELD_ID_LABEL"
+            default="0"
+            class="readonly"
+            readonly="true"
+        />
+
+        <field
+            name="ysi_item_id"
+            type="sql"
+            label="COM_YSINVENTORY_FIELD_LEND_ITEM_LABEL"
+            description="COM_YSINVENTORY_FIELD_LEND_ITEM_DESC"
+            required="true"
+            key_field="value"
+            value_field="text"
+            query="SELECT id AS value, name AS text FROM #__ysi_items WHERE published = 1 ORDER BY name"
+        >
+            <option value="">COM_YSINVENTORY_SELECT_ITEM</option>
+        </field>
+
+        <field
+            name="ysi_user_id"
+            type="user"
+            label="COM_YSINVENTORY_FIELD_LEND_USER_LABEL"
+            description="COM_YSINVENTORY_FIELD_LEND_USER_DESC"
+            required="true"
+        />
+
+        <field
+            name="ysi_from"
+            type="calendar"
+            label="COM_YSINVENTORY_FIELD_LEND_FROM_LABEL"
+            description="COM_YSINVENTORY_FIELD_LEND_FROM_DESC"
+            required="true"
+            showtime="false"
+            format="%Y-%m-%d"
+            translateformat="false"
+            filter="user_utc"
+        />
+
+        <field
+            name="ysi_to"
+            type="calendar"
+            label="COM_YSINVENTORY_FIELD_LEND_TO_LABEL"
+            description="COM_YSINVENTORY_FIELD_LEND_TO_DESC"
+            required="true"
+            showtime="false"
+            format="%Y-%m-%d"
+            translateformat="false"
+            filter="user_utc"
+        />
+
+        <field
+            name="ysi_note"
+            type="textarea"
+            label="COM_YSINVENTORY_FIELD_LEND_NOTE_LABEL"
+            description="COM_YSINVENTORY_FIELD_LEND_NOTE_DESC"
+            rows="5"
+            cols="40"
+            filter="string"
+        />
+
+        <field
+            name="ysi_status"
+            type="list"
+            label="COM_YSINVENTORY_FIELD_LEND_STATUS_LABEL"
+            description="COM_YSINVENTORY_FIELD_LEND_STATUS_DESC"
+            default="1"
+            required="true"
+            validate="options"
+        >
+            <option value="1">COM_YSINVENTORY_LEND_STATUS_REQUESTED</option>
+            <option value="2">COM_YSINVENTORY_LEND_STATUS_ON_LOAN</option>
+            <option value="3">COM_YSINVENTORY_LEND_STATUS_RETURNED</option>
+            <option value="4">COM_YSINVENTORY_LEND_STATUS_LOST</option>
+            <option value="5">COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED</option>
+            <option value="6">COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE</option>
+        </field>
+    </fieldset>
+</form>

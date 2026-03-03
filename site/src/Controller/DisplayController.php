@@ -39,6 +39,7 @@ class DisplayController extends BaseController
         $urlparams['start'] = 'INT';
         $urlparams['limitstart'] = 'INT';
         $urlparams['limit'] = 'INT';
+        $urlparams['ysi_status'] = 'INT';
 
         return parent::display($cachable, $urlparams);
     }
