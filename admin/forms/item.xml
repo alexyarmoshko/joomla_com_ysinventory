@@ -114,6 +114,20 @@
         />
 
         <field
+            name="ysi_status"
+            type="list"
+            label="COM_YSINVENTORY_FIELD_ASSET_STATUS_LABEL"
+            description="COM_YSINVENTORY_FIELD_ASSET_STATUS_DESC"
+            default="1"
+            filter="int"
+        >
+            <option value="1">COM_YSINVENTORY_ASSET_STATUS_IN_STOCK</option>
+            <option value="2">COM_YSINVENTORY_ASSET_STATUS_ON_LOAN</option>
+            <option value="3">COM_YSINVENTORY_ASSET_STATUS_MAINTENANCE</option>
+            <option value="4">COM_YSINVENTORY_ASSET_STATUS_LOST</option>
+        </field>
+
+        <field
             name="description"
             type="editor"
             label="JGLOBAL_DESCRIPTION"

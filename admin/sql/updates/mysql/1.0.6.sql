@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS `#__ysi_lends` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ysi_item_id` int NOT NULL COMMENT 'FK to #__ysi_items',
-  `ysi_user_id` int NOT NULL COMMENT 'FK to #__users (borrower)',
+  `ysi_user_id` int NOT NULL COMMENT 'FK to #__users (loanee)',
   `ysi_from` date NOT NULL,
   `ysi_to` date NOT NULL,
   `ysi_note` text,

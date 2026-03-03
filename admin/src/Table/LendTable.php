@@ -35,8 +35,8 @@ class LendTable extends Table implements CurrentUserInterface
     /** @var array Valid status transitions: old => [allowed new statuses] */
     private const TRANSITIONS = [
         0 => [1],        // new record => Requested
-        1 => [2],        // Requested => Borrowed
-        2 => [3, 4],     // Borrowed => Returned | Lost
+        1 => [2],        // Requested => On Loan
+        2 => [3, 4],     // On Loan => Returned | Lost
     ];
 
     public function __construct(DatabaseInterface $db, ?DispatcherInterface $dispatcher = null)
@@ -97,7 +97,7 @@ class LendTable extends Table implements CurrentUserInterface
             );
             $quantity = (int) $db->loadResult();
 
-            // Count currently borrowed items (exclude this record if updating).
+            // Count currently loaned items (exclude this record if updating).
             $query = $db->getQuery(true)
                 ->select('COUNT(*)')
                 ->from($db->quoteName('#__ysi_lends'))

@@ -83,6 +83,9 @@ if ($saveOrder && !empty($this->items)) {
                                 <th scope="col" class="w-10 d-none d-md-table-cell">
                                     <?php echo Text::_('COM_YSINVENTORY_FIELD_CATEGORY_LABEL'); ?>
                                 </th>
+                                <th scope="col" class="w-10 d-none d-md-table-cell text-center">
+                                    <?php echo HTMLHelper::_('searchtools.sort', 'COM_YSINVENTORY_FIELD_ASSET_STATUS_LABEL', 'a.ysi_status', $listDirn, $listOrder); ?>
+                                </th>
                                 <th scope="col" class="w-5 d-none d-md-table-cell text-center">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'COM_YSINVENTORY_FIELD_QUANTITY_LABEL', 'a.ysi_quantity', $listDirn, $listOrder); ?>
                                 </th>
@@ -93,8 +96,7 @@ if ($saveOrder && !empty($this->items)) {
                         </thead>
                         <tbody <?php if ($saveOrder): ?> class="js-draggable" data-url="
                         <?php echo $saveOrderingUrl; ?>" data-direction="
-                        <?php echo strtolower($listDirn); ?>" data-nested="false"
-                            <?php endif; ?>>
+                        <?php echo strtolower($listDirn); ?>" data-nested="false" <?php endif; ?>>
                             <?php foreach ($this->items as $i => $item):
                                 $canEdit = $user->authorise('core.edit', 'com_ysinventory');
                                 $canCheckin = $user->authorise('core.manage', 'com_checkin') || $item->checked_out == $userId || is_null($item->checked_out);
@@ -151,6 +153,21 @@ if ($saveOrder && !empty($this->items)) {
                                     </td>
                                     <td class="small d-none d-md-table-cell">
                                         <?php echo $this->escape($item->category_title ?? ''); ?>
+                                    </td>
+                                    <td class="text-center d-none d-md-table-cell">
+                                        <?php
+                                        $statusMapping = [
+                                            '' => ['class' => 'secondary', 'text' => 'JNONE'],
+                                            1 => ['class' => 'success', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_IN_STOCK'],
+                                            2 => ['class' => 'primary', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_ON_LOAN'],
+                                            3 => ['class' => 'warning', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_MAINTENANCE'],
+                                            4 => ['class' => 'danger', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_LOST'],
+                                        ];
+                                        $status = $statusMapping[$item->ysi_status ?? ''] ?? $statusMapping[''];
+                                        ?>
+                                        <span class="badge bg-<?php echo $status['class']; ?>">
+                                            <?php echo Text::_($status['text']); ?>
+                                        </span>
                                     </td>
                                     <td class="small d-none d-md-table-cell text-center">
                                         <?php echo (int) $item->ysi_quantity; ?>

@@ -25,7 +25,18 @@ $statusLabels = [
     2 => 'COM_YSINVENTORY_LEND_STATUS_BORROWED',
     3 => 'COM_YSINVENTORY_LEND_STATUS_RETURNED',
     4 => 'COM_YSINVENTORY_LEND_STATUS_LOST',
+    5 => 'COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED',
+    6 => 'COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE',
 ];
+
+$assetStatusMapping = [
+    '' => ['class' => 'secondary', 'text' => 'JNONE'],
+    1 => ['class' => 'success', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_IN_STOCK'],
+    2 => ['class' => 'primary', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_ON_LOAN'],
+    3 => ['class' => 'warning', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_MAINTENANCE'],
+    4 => ['class' => 'danger', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_LOST'],
+];
+$assetStatus = $assetStatusMapping[$item->ysi_status ?? ''] ?? $assetStatusMapping[''];
 ?>
 <div class="com-ysinventory-item">
     <h2>
@@ -111,6 +122,17 @@ $statusLabels = [
 
                         <tr>
                             <th scope="row">
+                                <?php echo Text::_('COM_YSINVENTORY_FIELD_ASSET_STATUS_LABEL'); ?>
+                            </th>
+                            <td>
+                                <span class="badge bg-<?php echo $assetStatus['class']; ?>">
+                                    <?php echo Text::_($assetStatus['text']); ?>
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">
                                 <?php echo Text::_('COM_YSINVENTORY_FIELD_BRAND_LABEL'); ?>
                             </th>
                             <td>
@@ -163,8 +185,8 @@ $statusLabels = [
                     <h3>
                         <?php echo Text::_('COM_YSINVENTORY_LEND_REQUEST_TITLE'); ?>
                     </h3>
-                    <form action="<?php echo Route::_('index.php?option=com_ysinventory&task=lend.request'); ?>" method="post"
-                        class="row g-3">
+                    <form action="<?php echo Route::_('index.php?option=com_ysinventory&task=lend.request'); ?>"
+                        method="post" class="row g-3">
                         <input type="hidden" name="ysi_item_id" value="<?php echo (int) $item->id; ?>">
                         <div class="col-md-3">
                             <label for="ysi_from" class="form-label">

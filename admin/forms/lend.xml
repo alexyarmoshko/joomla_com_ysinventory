@@ -75,9 +75,11 @@
             validate="options"
         >
             <option value="1">COM_YSINVENTORY_LEND_STATUS_REQUESTED</option>
-            <option value="2">COM_YSINVENTORY_LEND_STATUS_BORROWED</option>
+            <option value="2">COM_YSINVENTORY_LEND_STATUS_ON_LOAN</option>
             <option value="3">COM_YSINVENTORY_LEND_STATUS_RETURNED</option>
             <option value="4">COM_YSINVENTORY_LEND_STATUS_LOST</option>
+            <option value="5">COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED</option>
+            <option value="6">COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE</option>
         </field>
     </fieldset>
 

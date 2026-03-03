@@ -33,6 +33,8 @@ $statusLabels = [
     2 => ['COM_YSINVENTORY_LEND_STATUS_BORROWED', 'primary'],
     3 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED', 'success'],
     4 => ['COM_YSINVENTORY_LEND_STATUS_LOST', 'danger'],
+    5 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED', 'warning'],
+    6 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE', 'danger'],
 ];
 ?>
 <form action="<?php echo Route::_('index.php?option=com_ysinventory&view=lends'); ?>" method="post" name="adminForm"

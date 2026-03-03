@@ -50,6 +50,8 @@ class ItemsModel extends ListModel
                 'a.brand_id',
                 'ysi_quantity',
                 'a.ysi_quantity',
+                'ysi_status',
+                'a.ysi_status',
             ];
         }
 
@@ -68,6 +70,7 @@ class ItemsModel extends ListModel
         $id .= ':' . $this->getState('filter.ysi_inventory_id');
         $id .= ':' . $this->getState('filter.catid');
         $id .= ':' . $this->getState('filter.brand_id');
+        $id .= ':' . $this->getState('filter.ysi_status');
 
         return parent::getStoreId($id);
     }
@@ -87,6 +90,7 @@ class ItemsModel extends ListModel
                 'a.brand_id',
                 'a.ysi_location_user_id',
                 'a.ysi_quantity',
+                'a.ysi_status',
                 'a.published',
                 'a.checked_out',
                 'a.checked_out_time',
@@ -168,6 +172,15 @@ class ItemsModel extends ListModel
             $brandId = (int) $brandId;
             $query->where($db->quoteName('a.brand_id') . ' = :brandId');
             $query->bind(':brandId', $brandId, ParameterType::INTEGER);
+        }
+
+        // Filter by status.
+        $status = $this->getState('filter.ysi_status');
+
+        if (is_numeric($status)) {
+            $status = (int) $status;
+            $query->where($db->quoteName('a.ysi_status') . ' = :status');
+            $query->bind(':status', $status, ParameterType::INTEGER);
         }
 
         // Filter by search.

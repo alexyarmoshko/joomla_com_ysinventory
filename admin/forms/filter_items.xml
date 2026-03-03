@@ -20,6 +20,19 @@
         </field>
 
         <field
+            name="ysi_status"
+            type="list"
+            label="COM_YSINVENTORY_FIELD_ASSET_STATUS_LABEL"
+            class="js-select-submit-on-change"
+        >
+            <option value="">COM_YSINVENTORY_FILTER_SELECT_ASSET_STATUS</option>
+            <option value="1">COM_YSINVENTORY_ASSET_STATUS_IN_STOCK</option>
+            <option value="2">COM_YSINVENTORY_ASSET_STATUS_ON_LOAN</option>
+            <option value="3">COM_YSINVENTORY_ASSET_STATUS_MAINTENANCE</option>
+            <option value="4">COM_YSINVENTORY_ASSET_STATUS_LOST</option>
+        </field>
+
+        <field
             name="ysi_inventory_id"
             type="sql"
             label="COM_YSINVENTORY_FIELD_INVENTORY_LABEL"

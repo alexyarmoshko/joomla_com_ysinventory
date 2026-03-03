@@ -51,6 +51,7 @@ class ItemModel extends BaseDatabaseModel
             'a.ysi_serial_number',
             'a.ysi_sku',
             'a.ysi_quantity',
+            'a.ysi_status',
             'a.ysi_inventory_id',
             'a.catid',
             'a.brand_id',
@@ -159,7 +160,7 @@ class ItemModel extends BaseDatabaseModel
             return new Registry('{}');
         }
 
-        $db    = $this->getDatabase();
+        $db = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select($db->quoteName('params'))
             ->from($db->quoteName('#__ysi_categories'))
@@ -188,7 +189,7 @@ class ItemModel extends BaseDatabaseModel
             return [];
         }
 
-        $db    = $this->getDatabase();
+        $db = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('l.id'),
