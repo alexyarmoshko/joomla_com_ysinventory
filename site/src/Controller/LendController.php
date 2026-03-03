@@ -21,6 +21,7 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Database\ParameterType;
+use Joomla\Registry\Registry;
 
 class LendController extends BaseController
 {
@@ -34,7 +35,7 @@ class LendController extends BaseController
             return false;
         }
 
-        $app = Factory::getApplication();
+        $app  = Factory::getApplication();
         $user = $app->getIdentity();
 
         // Must be logged in.
@@ -45,39 +46,19 @@ class LendController extends BaseController
             return false;
         }
 
-        // Check user is in a request group.
-        $params = ComponentHelper::getParams('com_ysinventory');
-        $requestGroups = $params->get('ysi_lend_request_groups', []);
-
-        if (empty($requestGroups)) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_CONFIGURED'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ysinventory&view=items', false));
-
-            return false;
-        }
-
-        $userGroups = $user->getAuthorisedGroups();
-        $requestGroups = (array) $requestGroups;
-
-        if (empty(array_intersect($userGroups, $requestGroups))) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_AUTHORISED'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ysinventory&view=items', false));
-
-            return false;
-        }
-
-        $input = $app->getInput();
+        // Extract input.
+        $input  = $app->getInput();
         $itemId = $input->getInt('ysi_item_id', 0);
-        $from = $input->getString('ysi_from', '');
-        $to = $input->getString('ysi_to', '');
-        $note = $input->getString('ysi_note', '');
+        $from   = $input->getString('ysi_from', '');
+        $to     = $input->getString('ysi_to', '');
+        $note   = $input->getString('ysi_note', '');
 
         $returnUrl = Route::_('index.php?option=com_ysinventory&view=item&id=' . $itemId, false);
 
-        // Validate item exists and is published.
-        $db = Factory::getContainer()->get('DatabaseDriver');
+        // Load item with access and catid.
+        $db    = Factory::getContainer()->get('DatabaseDriver');
         $query = $db->getQuery(true)
-            ->select([$db->quoteName('id'), $db->quoteName('ysi_quantity')])
+            ->select($db->quoteName(['id', 'ysi_quantity', 'access', 'catid']))
             ->from($db->quoteName('#__ysi_items'))
             ->where($db->quoteName('id') . ' = :itemId')
             ->where($db->quoteName('published') . ' = 1')
@@ -92,9 +73,74 @@ class LendController extends BaseController
             return false;
         }
 
-        // Validate dates.
+        // Access check (Finding 5): verify the user can view this item.
+        if (!\in_array((int) $item->access, $user->getAuthorisedViewLevels(), true)) {
+            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_ACCESS_DENIED'), 'error');
+            $this->setRedirect(Route::_('index.php?option=com_ysinventory&view=items', false));
+
+            return false;
+        }
+
+        // Category-level auth with fallback to component params (Findings 1+2).
+        $componentParams = ComponentHelper::getParams('com_ysinventory');
+        $catParams       = new Registry('{}');
+
+        if ((int) $item->catid > 0) {
+            $catQuery = $db->getQuery(true)
+                ->select($db->quoteName('params'))
+                ->from($db->quoteName('#__ysi_categories'))
+                ->where($db->quoteName('id') . ' = :catId')
+                ->bind(':catId', $item->catid, ParameterType::INTEGER);
+            $db->setQuery($catQuery);
+            $catJson = $db->loadResult();
+
+            if (!empty($catJson) && \is_string($catJson)) {
+                $catParams = new Registry($catJson);
+            }
+        }
+
+        $requestGroups = (array) $catParams->get('ysi_lend_request_groups', []);
+
+        if (empty($requestGroups)) {
+            $requestGroups = (array) $componentParams->get('ysi_lend_request_groups', []);
+        }
+
+        if (empty($requestGroups)) {
+            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_CONFIGURED'), 'error');
+            $this->setRedirect($returnUrl);
+
+            return false;
+        }
+
+        $userGroups = $user->getAuthorisedGroups();
+
+        if (empty(array_intersect($userGroups, $requestGroups))) {
+            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_AUTHORISED'), 'error');
+            $this->setRedirect($returnUrl);
+
+            return false;
+        }
+
+        // Strict date validation (Finding 6).
         if (empty($from) || empty($to)) {
             $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_REQUIRE_DATES'), 'error');
+            $this->setRedirect($returnUrl);
+
+            return false;
+        }
+
+        $fromDate = \DateTimeImmutable::createFromFormat('Y-m-d', $from);
+        $toDate   = \DateTimeImmutable::createFromFormat('Y-m-d', $to);
+
+        if (!$fromDate || $fromDate->format('Y-m-d') !== $from) {
+            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'), 'error');
+            $this->setRedirect($returnUrl);
+
+            return false;
+        }
+
+        if (!$toDate || $toDate->format('Y-m-d') !== $to) {
+            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'), 'error');
             $this->setRedirect($returnUrl);
 
             return false;
@@ -116,17 +162,8 @@ class LendController extends BaseController
             return false;
         }
 
-        // Stock check.
-        $query = $db->getQuery(true)
-            ->select('COUNT(*)')
-            ->from($db->quoteName('#__ysi_lends'))
-            ->where($db->quoteName('ysi_item_id') . ' = :stockItemId')
-            ->where($db->quoteName('ysi_status') . ' = 2')
-            ->bind(':stockItemId', $itemId, ParameterType::INTEGER);
-        $db->setQuery($query);
-        $borrowedCount = (int) $db->loadResult();
-
-        if ($borrowedCount >= (int) $item->ysi_quantity) {
+        // Stock check (Finding 3): simple quantity > 0 check.
+        if ((int) $item->ysi_quantity <= 0) {
             $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NO_STOCK'), 'error');
             $this->setRedirect($returnUrl);
 

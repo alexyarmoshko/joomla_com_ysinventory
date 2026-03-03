@@ -17,6 +17,7 @@ namespace YakShaver\Component\Ysinventory\Site\Model;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\ParameterType;
+use Joomla\Registry\Registry;
 
 class ItemModel extends BaseDatabaseModel
 {
@@ -143,5 +144,71 @@ class ItemModel extends BaseDatabaseModel
         }
 
         return $this->item;
+    }
+
+    /**
+     * Load category params as a Registry for a given category ID.
+     *
+     * @param   int  $catId  Category ID.
+     *
+     * @return  Registry
+     */
+    public function getCategoryParams(int $catId): Registry
+    {
+        if ($catId <= 0) {
+            return new Registry('{}');
+        }
+
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('params'))
+            ->from($db->quoteName('#__ysi_categories'))
+            ->where($db->quoteName('id') . ' = :catId')
+            ->bind(':catId', $catId, ParameterType::INTEGER);
+        $db->setQuery($query);
+        $json = $db->loadResult();
+
+        if (!empty($json) && \is_string($json)) {
+            return new Registry($json);
+        }
+
+        return new Registry('{}');
+    }
+
+    /**
+     * Load borrowing records for a given item ID.
+     *
+     * @param   int  $itemId  Item ID.
+     *
+     * @return  array
+     */
+    public function getItemBorrowings(int $itemId): array
+    {
+        if ($itemId <= 0) {
+            return [];
+        }
+
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('l.id'),
+                $db->quoteName('u.name', 'borrower_name'),
+                $db->quoteName('l.ysi_from'),
+                $db->quoteName('l.ysi_to'),
+                $db->quoteName('l.ysi_status'),
+                $db->quoteName('l.ysi_note'),
+                $db->quoteName('l.created'),
+            ])
+            ->from($db->quoteName('#__ysi_lends', 'l'))
+            ->join(
+                'LEFT',
+                $db->quoteName('#__users', 'u') . ' ON ' . $db->quoteName('u.id') . ' = ' . $db->quoteName('l.ysi_user_id')
+            )
+            ->where($db->quoteName('l.ysi_item_id') . ' = :itemId')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER)
+            ->order($db->quoteName('l.ysi_from') . ' DESC');
+        $db->setQuery($query);
+
+        return $db->loadObjectList() ?: [];
     }
 }

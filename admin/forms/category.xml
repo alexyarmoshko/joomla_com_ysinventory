@@ -81,7 +81,36 @@
     </fieldset>
 
     <fields name="params">
-        <fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC">
+        <fieldset name="basic" label="COM_YSINVENTORY_CATEGORY_FIELDSET_LENDING">
+            <field
+                name="ysi_lend_request_groups"
+                type="usergrouplist"
+                label="COM_YSINVENTORY_CONFIG_LEND_REQUEST_GROUPS_LABEL"
+                description="COM_YSINVENTORY_CATEGORY_LEND_REQUEST_GROUPS_DESC"
+                multiple="true"
+                layout="joomla.form.field.list-fancy-select"
+            />
+
+            <field
+                name="ysi_lend_moderation_groups"
+                type="usergrouplist"
+                label="COM_YSINVENTORY_CONFIG_LEND_MODERATION_GROUPS_LABEL"
+                description="COM_YSINVENTORY_CATEGORY_LEND_MODERATION_GROUPS_DESC"
+                multiple="true"
+                layout="joomla.form.field.list-fancy-select"
+            />
+
+            <field
+                name="ysi_lend_show_borrowings"
+                type="list"
+                label="COM_YSINVENTORY_CATEGORY_SHOW_BORROWINGS_LABEL"
+                description="COM_YSINVENTORY_CATEGORY_SHOW_BORROWINGS_DESC"
+                default=""
+            >
+                <option value="">COM_YSINVENTORY_USE_GLOBAL</option>
+                <option value="1">JYES</option>
+                <option value="0">JNO</option>
+            </field>
         </fieldset>
     </fields>
 

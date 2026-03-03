@@ -48,6 +48,21 @@ $wa->useScript('keepalive')
         </div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
+        <?php echo HTMLHelper::_('uitab.addTab', 'myTab', 'lending', Text::_('COM_YSINVENTORY_CATEGORY_FIELDSET_LENDING')); ?>
+        <div class="row">
+            <div class="col-lg-9">
+                <fieldset id="fieldset-lending" class="options-form">
+                    <legend><?php echo Text::_('COM_YSINVENTORY_CATEGORY_FIELDSET_LENDING'); ?></legend>
+                    <div>
+                        <?php foreach ($this->form->getFieldset('basic') as $field) : ?>
+                            <?php echo $field->renderField(); ?>
+                        <?php endforeach; ?>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
+
         <?php echo HTMLHelper::_('uitab.addTab', 'myTab', 'publishing', Text::_('JGLOBAL_FIELDSET_PUBLISHING')); ?>
         <div class="row">
             <div class="col-md-6">

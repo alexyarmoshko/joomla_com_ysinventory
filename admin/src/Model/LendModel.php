@@ -14,8 +14,11 @@ namespace YakShaver\Component\Ysinventory\Administrator\Model;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\AdminModel;
+use Joomla\Database\ParameterType;
+use Joomla\Registry\Registry;
 
 class LendModel extends AdminModel
 {
@@ -35,7 +38,14 @@ class LendModel extends AdminModel
             return false;
         }
 
-        if (!$this->canEditState((object) $data)) {
+        // Use the actual record for authorization when $data is empty (form bootstrap).
+        $stateCheckData = $data;
+
+        if (empty($stateCheckData) || empty($stateCheckData['ysi_item_id'] ?? null)) {
+            $stateCheckData = $this->getItem();
+        }
+
+        if (!$this->canEditState((object) $stateCheckData)) {
             $form->setFieldAttribute('ysi_status', 'disabled', 'true');
             $form->setFieldAttribute('ysi_status', 'filter', 'unset');
         }
@@ -80,6 +90,58 @@ class LendModel extends AdminModel
 
     protected function canEditState($record)
     {
-        return $this->getCurrentUser()->authorise('core.edit.state', 'com_ysinventory');
+        $user = $this->getCurrentUser();
+
+        // Component ACL check.
+        if ($user->authorise('core.edit.state', 'com_ysinventory')) {
+            return true;
+        }
+
+        // Category-level moderation group check with component fallback.
+        $itemId = (int) ($record->ysi_item_id ?? 0);
+
+        if ($itemId <= 0 || $user->guest) {
+            return false;
+        }
+
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('catid'))
+            ->from($db->quoteName('#__ysi_items'))
+            ->where($db->quoteName('id') . ' = :itemId')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER);
+        $db->setQuery($query);
+        $catId = (int) $db->loadResult();
+
+        $moderationGroups = [];
+
+        if ($catId > 0) {
+            $query = $db->getQuery(true)
+                ->select($db->quoteName('params'))
+                ->from($db->quoteName('#__ysi_categories'))
+                ->where($db->quoteName('id') . ' = :catId')
+                ->bind(':catId', $catId, ParameterType::INTEGER);
+            $db->setQuery($query);
+            $catJson = $db->loadResult();
+
+            if (!empty($catJson) && \is_string($catJson)) {
+                $catParams        = new Registry($catJson);
+                $moderationGroups = (array) $catParams->get('ysi_lend_moderation_groups', []);
+            }
+        }
+
+        if (empty($moderationGroups)) {
+            $moderationGroups = (array) ComponentHelper::getParams('com_ysinventory')->get('ysi_lend_moderation_groups', []);
+        }
+
+        if (!empty($moderationGroups)) {
+            $userGroups = $user->getAuthorisedGroups();
+
+            if (!empty(array_intersect($userGroups, $moderationGroups))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

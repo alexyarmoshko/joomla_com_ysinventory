@@ -24,6 +24,8 @@ class HtmlView extends BaseHtmlView
 {
     protected $item;
     public $canRequestLend = false;
+    public $showBorrowings = false;
+    public $borrowings = [];
 
     public function display($tpl = null)
     {
@@ -35,19 +37,47 @@ class HtmlView extends BaseHtmlView
             throw new GenericDataException(Text::_('COM_YSINVENTORY_ERROR_ITEM_NOT_FOUND'), 404);
         }
 
+        $user            = Factory::getApplication()->getIdentity();
+        $componentParams = ComponentHelper::getParams('com_ysinventory');
+
+        // Load category-level params with component fallback.
+        $catParams     = $model->getCategoryParams((int) ($this->item->catid ?? 0));
+        $requestGroups = (array) $catParams->get('ysi_lend_request_groups', []);
+
+        if (empty($requestGroups)) {
+            $requestGroups = (array) $componentParams->get('ysi_lend_request_groups', []);
+        }
+
+        $moderationGroups = (array) $catParams->get('ysi_lend_moderation_groups', []);
+
+        if (empty($moderationGroups)) {
+            $moderationGroups = (array) $componentParams->get('ysi_lend_moderation_groups', []);
+        }
+
         // Determine whether the current user can submit a lend request.
-        $user = Factory::getApplication()->getIdentity();
-
         if (!$user->guest && $this->item) {
-            $params = ComponentHelper::getParams('com_ysinventory');
-            $requestGroups = (array) $params->get('ysi_lend_request_groups', []);
-
             if (!empty($requestGroups)) {
                 $userGroups = $user->getAuthorisedGroups();
 
-                if (!empty(array_intersect($userGroups, $requestGroups)) && ($this->item->available_stock ?? 0) > 0) {
+                if (!empty(array_intersect($userGroups, $requestGroups)) && ((int) $this->item->ysi_quantity > 0)) {
                     $this->canRequestLend = true;
                 }
+            }
+        }
+
+        // Borrowings tab: controlled by show_borrowings setting + moderation group membership.
+        $showBorrowingsSetting = $catParams->get('ysi_lend_show_borrowings', '');
+
+        if ($showBorrowingsSetting === '' || $showBorrowingsSetting === null) {
+            $showBorrowingsSetting = $componentParams->get('ysi_lend_show_borrowings', '1');
+        }
+
+        if ((int) $showBorrowingsSetting === 1 && !$user->guest && $this->item && !empty($moderationGroups)) {
+            $userGroups = $userGroups ?? $user->getAuthorisedGroups();
+
+            if (!empty(array_intersect($userGroups, $moderationGroups))) {
+                $this->showBorrowings = true;
+                $this->borrowings     = $model->getItemBorrowings((int) $this->item->id);
             }
         }
 
@@ -59,7 +89,7 @@ class HtmlView extends BaseHtmlView
 
     protected function prepareBreadcrumbs()
     {
-        $app = Factory::getApplication();
+        $app     = Factory::getApplication();
         $pathway = $app->getPathway();
 
         $pathway->addItem(

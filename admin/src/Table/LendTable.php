@@ -29,6 +29,9 @@ class LendTable extends Table implements CurrentUserInterface
 
     protected $_supportNullValue = true;
 
+    /** @var int Status before save, determined in check(). */
+    private $oldStatus = 0;
+
     /** @var array Valid status transitions: old => [allowed new statuses] */
     private const TRANSITIONS = [
         0 => [1],        // new record => Requested
@@ -45,7 +48,7 @@ class LendTable extends Table implements CurrentUserInterface
 
     public function store($updateNulls = true)
     {
-        $date = Factory::getDate()->toSql();
+        $date   = Factory::getDate()->toSql();
         $userId = $this->getCurrentUser()->id;
 
         if (!(int) $this->created) {
@@ -54,7 +57,7 @@ class LendTable extends Table implements CurrentUserInterface
 
         if ($this->id) {
             $this->modified_by = $userId;
-            $this->modified = $date;
+            $this->modified    = $date;
         } else {
             if (empty($this->created_by)) {
                 $this->created_by = $userId;
@@ -69,7 +72,71 @@ class LendTable extends Table implements CurrentUserInterface
             }
         }
 
-        return parent::store($updateNulls);
+        $status = (int) $this->ysi_status;
+        $needsStockGuard = ($status === 2 && $this->oldStatus !== 2);
+
+        if (!$needsStockGuard) {
+            return parent::store($updateNulls);
+        }
+
+        // Transactional stock guard with row-level lock (Finding 7).
+        $db     = $this->getDatabase();
+        $itemId = (int) $this->ysi_item_id;
+        $lendId = (int) $this->id;
+
+        $db->transactionStart();
+
+        try {
+            // Lock the item row to prevent concurrent approvals.
+            // Raw SQL with integer-cast value to safely append FOR UPDATE.
+            $db->setQuery(
+                'SELECT ' . $db->quoteName('ysi_quantity')
+                . ' FROM ' . $db->quoteName('#__ysi_items')
+                . ' WHERE ' . $db->quoteName('id') . ' = ' . $itemId
+                . ' FOR UPDATE'
+            );
+            $quantity = (int) $db->loadResult();
+
+            // Count currently borrowed items (exclude this record if updating).
+            $query = $db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($db->quoteName('#__ysi_lends'))
+                ->where($db->quoteName('ysi_item_id') . ' = :guardItemId')
+                ->where($db->quoteName('ysi_status') . ' = 2')
+                ->bind(':guardItemId', $itemId, ParameterType::INTEGER);
+
+            if ($lendId > 0) {
+                $query->where($db->quoteName('id') . ' != :guardLendId')
+                    ->bind(':guardLendId', $lendId, ParameterType::INTEGER);
+            }
+
+            $db->setQuery($query);
+            $borrowedCount = (int) $db->loadResult();
+
+            if ($borrowedCount >= $quantity) {
+                $db->transactionRollback();
+                $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_NO_STOCK'));
+
+                return false;
+            }
+
+            $result = parent::store($updateNulls);
+
+            if (!$result) {
+                $db->transactionRollback();
+
+                return false;
+            }
+
+            $db->transactionCommit();
+
+            return true;
+        } catch (\Exception $e) {
+            $db->transactionRollback();
+            $this->setError($e->getMessage());
+
+            return false;
+        }
     }
 
     public function check()
@@ -95,9 +162,24 @@ class LendTable extends Table implements CurrentUserInterface
             return false;
         }
 
-        // Date validation.
+        // Date validation: strict format check with round-trip.
         if (empty($this->ysi_from) || empty($this->ysi_to)) {
             $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_REQUIRE_DATES'));
+
+            return false;
+        }
+
+        $fromDate = \DateTimeImmutable::createFromFormat('Y-m-d', $this->ysi_from);
+        $toDate   = \DateTimeImmutable::createFromFormat('Y-m-d', $this->ysi_to);
+
+        if (!$fromDate || $fromDate->format('Y-m-d') !== $this->ysi_from) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'));
+
+            return false;
+        }
+
+        if (!$toDate || $toDate->format('Y-m-d') !== $this->ysi_to) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'));
 
             return false;
         }
@@ -118,7 +200,7 @@ class LendTable extends Table implements CurrentUserInterface
         }
 
         // Status transition validation.
-        $oldStatus = 0;
+        $this->oldStatus = 0;
 
         if ($this->id) {
             $db = $this->getDatabase();
@@ -128,8 +210,10 @@ class LendTable extends Table implements CurrentUserInterface
                 ->where($db->quoteName('id') . ' = :lendId')
                 ->bind(':lendId', $this->id, ParameterType::INTEGER);
             $db->setQuery($query);
-            $oldStatus = (int) $db->loadResult();
+            $this->oldStatus = (int) $db->loadResult();
         }
+
+        $oldStatus = $this->oldStatus;
 
         // Allow saving without changing the status.
         if ($status !== $oldStatus) {
@@ -174,31 +258,6 @@ class LendTable extends Table implements CurrentUserInterface
             $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_USER_NOT_FOUND'));
 
             return false;
-        }
-
-        // Stock guard: when transitioning to Borrowed (status 2), check available stock.
-        if ($status === 2 && $oldStatus !== 2) {
-            $lendId = (int) $this->id;
-            $query = $db->getQuery(true)
-                ->select('COUNT(*)')
-                ->from($db->quoteName('#__ysi_lends'))
-                ->where($db->quoteName('ysi_item_id') . ' = :guardItemId')
-                ->where($db->quoteName('ysi_status') . ' = 2')
-                ->bind(':guardItemId', $itemId, ParameterType::INTEGER);
-
-            if ($lendId > 0) {
-                $query->where($db->quoteName('id') . ' != :guardLendId')
-                    ->bind(':guardLendId', $lendId, ParameterType::INTEGER);
-            }
-
-            $db->setQuery($query);
-            $borrowedCount = (int) $db->loadResult();
-
-            if ($borrowedCount >= (int) $item->ysi_quantity) {
-                $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_NO_STOCK'));
-
-                return false;
-            }
         }
 
         return true;

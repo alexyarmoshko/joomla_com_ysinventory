@@ -21,6 +21,17 @@
             multiple="true"
             layout="joomla.form.field.list-fancy-select"
         />
+
+        <field
+            name="ysi_lend_show_borrowings"
+            type="list"
+            label="COM_YSINVENTORY_CONFIG_SHOW_BORROWINGS_LABEL"
+            description="COM_YSINVENTORY_CONFIG_SHOW_BORROWINGS_DESC"
+            default="1"
+        >
+            <option value="1">JYES</option>
+            <option value="0">JNO</option>
+        </field>
     </fieldset>
 
     <fieldset

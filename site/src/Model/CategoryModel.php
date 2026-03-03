@@ -17,6 +17,7 @@ namespace YakShaver\Component\Ysinventory\Site\Model;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
+use Joomla\Registry\Registry;
 
 class CategoryModel extends ListModel
 {
@@ -78,6 +79,7 @@ class CategoryModel extends ListModel
                 'path',
                 'parent_id',
                 'level',
+                'params',
                 'metadesc',
                 'metakey',
                 'language',
@@ -94,6 +96,12 @@ class CategoryModel extends ListModel
 
         $db->setQuery($query);
         $this->category = $db->loadObject();
+
+        if ($this->category && !empty($this->category->params) && \is_string($this->category->params)) {
+            $this->category->params = new Registry($this->category->params);
+        } elseif ($this->category) {
+            $this->category->params = new Registry('{}');
+        }
 
         return $this->category;
     }
