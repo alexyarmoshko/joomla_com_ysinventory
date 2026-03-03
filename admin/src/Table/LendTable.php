@@ -169,20 +169,24 @@ class LendTable extends Table implements CurrentUserInterface
             return false;
         }
 
-        $fromDate = \DateTimeImmutable::createFromFormat('Y-m-d', $this->ysi_from);
-        $toDate = \DateTimeImmutable::createFromFormat('Y-m-d', $this->ysi_to);
+        $fromDate = $this->normalizeDateValue((string) $this->ysi_from);
+        $toDate = $this->normalizeDateValue((string) $this->ysi_to);
 
-        if (!$fromDate || $fromDate->format('Y-m-d') !== $this->ysi_from) {
+        if ($fromDate === null) {
             $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'));
 
             return false;
         }
 
-        if (!$toDate || $toDate->format('Y-m-d') !== $this->ysi_to) {
+        if ($toDate === null) {
             $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'));
 
             return false;
         }
+
+        // Persist normalized DATE values to match schema and avoid timezone-formatted strings.
+        $this->ysi_from = $fromDate;
+        $this->ysi_to = $toDate;
 
         if ($this->ysi_from >= $this->ysi_to) {
             $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_DATE_ORDER'));
@@ -266,5 +270,35 @@ class LendTable extends Table implements CurrentUserInterface
     public function getTypeAlias()
     {
         return $this->typeAlias;
+    }
+
+    private function normalizeDateValue(string $value): ?string
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        // Already normalized date.
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+        if ($date && $date->format('Y-m-d') === $value) {
+            return $value;
+        }
+
+        // Accept calendar field variants that include time, keeping only the DATE part.
+        if (!preg_match('/^(\d{4}-\d{2}-\d{2})/', $value, $matches)) {
+            return null;
+        }
+
+        $normalized = $matches[1];
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $normalized);
+
+        if (!$date || $date->format('Y-m-d') !== $normalized) {
+            return null;
+        }
+
+        return $normalized;
     }
 }
