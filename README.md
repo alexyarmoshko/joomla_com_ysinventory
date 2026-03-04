@@ -1,48 +1,81 @@
-# Yak Shaver Inventory (com_ysinventory)
+# Yak Shaver Inventory (`com_ysinventory`)
 
-A Joomla 5.4 component for inventory management and lending.
+Joomla 5.4 component for managing inventories, assets, and loans.
 
-## Features
+## Current Status
 
-- Inventory management with categories, brands, and tags
-- Inventory owner selection supports exactly one of Joomla user or Joomla contact (XOR)
-- Item catalog with filtering, search, and pagination
-- Lending workflow with request/moderation and stock enforcement
-- Loan History uses Joomla standard list pagination controls ("Per page" + page links)
-- Configurable permissions via Joomla user groups
+- Version: **1.0.0**
+- Release state: **in progress**
+- Package output: `installation/com_ysinventory-v1-0-0.zip`
+
+## UI Terminology
+
+The UI uses the following business terms consistently:
+
+- **Asset** (entity/table name in code is still `item` in many places)
+- **Loan** (historically referred to as lend/lending in some internal identifiers)
+- **Loan Register** (loan list/management view)
+- **Loan History** (asset detail tab with borrowing history)
+
+## Implemented Features
+
+### Admin
+
+- Inventory CRUD
+- Inventory owner is required as XOR: exactly one of Joomla User or Joomla Contact
+- Component-local Categories with nested-set hierarchy and ACL-aware behavior
+- Brands CRUD
+- Tag Groups and Tags CRUD
+- Assets CRUD with links to Inventory, Category, Brand, Location (Joomla User), and tags
+- Loan Register CRUD and moderation workflow
+
+### Frontend
+
+- List/detail views for Brands, Categories, Tags, and Assets
+- Asset detail tabs for Details, Loan, and Loan History
+- Asset and loan list filtering, search, ordering, and pagination
+- Group-based access control for loan request and moderation flows
+
+### Loan Workflow
+
+- Loan request submission from asset detail page
+- Status lifecycle: Requested, On Loan, Returned, Lost, Returned Damaged, Returned Overdue
+- Category-level configuration with fallback to global component settings
+- Transactional stock guard on loan approval (`On Loan` transition)
+- Append-only loan journal table (`#__ysi_lends_log`) for update/delete snapshots
 
 ## Requirements
 
-- Joomla 5.4.x
-- PHP 8.3+
-- MySQL 8.0+ (utf8mb4)
+- Joomla **5.4.x**
+- PHP **8.3+**
+- MySQL **8.0+** (`utf8mb4`)
 
 ## Installation
 
-1. Download the latest release zip from `installation/`
-2. In Joomla Administrator, go to **System > Install > Extensions**
-3. Upload the zip file and install
+1. Build or obtain the component zip (for example, `installation/com_ysinventory-v1-0-0.zip`).
+2. In Joomla Administrator, open **System -> Install -> Extensions**.
+3. Upload the zip and complete installation.
 
-## Building from Source
+## Build From Source
 
 ```bash
-make info    # Show package details
-make dist    # Build the installation zip
-make clean   # Remove the built zip
+make info
+make dist
+make clean
 ```
 
-The build output is placed in `installation/com_ysinventory-v<version>.zip`.
+- `make info`: show package metadata (name/version/output path)
+- `make dist`: build extension package in `installation/`
+- `make clean`: remove the built package for the current version
 
-## Version
+## Documentation
 
-Current release: **v1.0.0**
-
-See [RELEASE.md](docs/RELEASE.md) for release notes and the design notes for design details.
+- [Release Notes](docs/RELEASE.md)
 
 ## License
 
-GNU General Public License version 2. See [LICENSE](LICENSE).
+GNU General Public License v2 or later. See [LICENSE](LICENSE).
 
 ## Author
 
-Yak Shaver — [kayakshaver.com](https://www.kayakshaver.com)
+Yak Shaver - [kayakshaver.com](https://www.kayakshaver.com)
