@@ -33,20 +33,11 @@ make clean   # Remove the built zip
 
 The build output is placed in `installation/com_ysinventory-v<version>.zip`.
 
-## Development Status
+## Version
 
-This component is under active development in phased increments:
+Current release: **v1.0.0**
 
-- **Phase 1**: Bootstrap and installability baseline
-- **Phase 2**: Inventory entity admin CRUD
-- **Phase 3**: Component-local categories
-- **Phase 4**: Brands
-- **Phase 5**: Tag groups and tags
-- **Phase 6**: Items and catalog browsing
-- **Phase 7**: Lending workflow
-- **Phase 8**: Release and documentation
-
-See the design notes for full details.
+See [RELEASE.md](RELEASE.md) for release notes and the design notes for design details.
 
 ## License
 
