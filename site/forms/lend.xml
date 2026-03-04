@@ -25,11 +25,18 @@
 
         <field
             name="ysi_user_id"
-            type="user"
+            type="sql"
             label="COM_YSINVENTORY_FIELD_LEND_USER_LABEL"
             description="COM_YSINVENTORY_FIELD_LEND_USER_DESC"
             required="true"
-        />
+            key_field="value"
+            value_field="text"
+            query="SELECT id AS value, CONCAT(name, ' (', username, ')') AS text FROM #__users WHERE block = 0 ORDER BY name"
+            layout="joomla.form.field.list-fancy-select"
+            class="advancedSelect"
+        >
+            <option value="">COM_YSINVENTORY_SELECT_LOANEE</option>
+        </field>
 
         <field
             name="ysi_from"

@@ -16,6 +16,7 @@ namespace YakShaver\Component\Ysinventory\Site\Model;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Form\Form;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
@@ -28,10 +29,8 @@ class LendModel extends AdminModel
 
     public function getForm($data = [], $loadData = true)
     {
-        // Support both site and administrator form locations so frontend lend edit
-        // continues to work even if a package missed site/forms during deployment.
-        $this->addFormPath(JPATH_COMPONENT . '/forms');
-        $this->addFormPath(JPATH_COMPONENT_ADMINISTRATOR . '/forms');
+        // Add admin form fallback path for deployments missing site/forms.
+        Form::addFormPath(JPATH_COMPONENT_ADMINISTRATOR . '/forms');
 
         $form = $this->loadForm(
             'com_ysinventory.' . $this->formName,

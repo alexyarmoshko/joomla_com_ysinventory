@@ -131,6 +131,11 @@ $statusLabels = [
                         <th class="d-none d-md-table-cell">
                             <?php echo Text::_('JGLOBAL_FIELD_CREATED_LABEL'); ?>
                         </th>
+                        <?php if ($isModerator): ?>
+                            <th class="text-end">
+                                <?php echo Text::_('JACTION_EDIT'); ?>
+                            </th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -139,10 +144,7 @@ $statusLabels = [
                         ?>
                         <tr>
                             <td>
-                                <a
-                                    href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) ($item->ysi_item_id ?? 0) . $itemIdParam); ?>">
-                                    <?php echo $this->escape($item->item_name ?? ''); ?>
-                                </a>
+                                <?php echo $this->escape($item->item_name ?? ''); ?>
                             </td>
                             <td>
                                 <?php if ($isModerator): ?>
@@ -170,6 +172,14 @@ $statusLabels = [
                             <td class="d-none d-md-table-cell">
                                 <?php echo HTMLHelper::_('date', $item->created, Text::_('DATE_FORMAT_LC4')); ?>
                             </td>
+                            <?php if ($isModerator): ?>
+                                <td class="text-end">
+                                    <a href="<?php echo Route::_('index.php?option=com_ysinventory&task=lend.edit&id=' . (int) $item->id . $itemIdParam); ?>"
+                                        class="btn btn-sm btn-outline-primary">
+                                        <?php echo Text::_('JACTION_EDIT'); ?>
+                                    </a>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

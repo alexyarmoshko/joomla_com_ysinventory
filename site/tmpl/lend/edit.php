@@ -15,6 +15,7 @@
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Factory;
 
 /** @var \YakShaver\Component\Ysinventory\Site\View\Lend\HtmlView $this */
 
@@ -24,13 +25,15 @@ $wa->useScript('keepalive')
     ->useScript('form.validate');
 
 $isNew = empty($this->item->id);
+$itemId = Factory::getApplication()->getInput()->getInt('Itemid');
+$itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
 ?>
 <div class="com-ysinventory-lend-edit">
     <h2>
         <?php echo $isNew ? Text::_('COM_YSINVENTORY_LEND_NEW') : Text::_('COM_YSINVENTORY_LEND_EDIT'); ?>
     </h2>
 
-    <form action="<?php echo Route::_('index.php?option=com_ysinventory&layout=edit&id=' . (int) $this->item->id); ?>"
+    <form action="<?php echo Route::_('index.php?option=com_ysinventory&view=lend&layout=edit&id=' . (int) $this->item->id . $itemIdParam); ?>"
         method="post" name="adminForm" id="adminForm"
         aria-label="<?php echo Text::_($isNew ? 'COM_YSINVENTORY_LEND_NEW' : 'COM_YSINVENTORY_LEND_EDIT', true); ?>"
         class="form-validate">
@@ -52,12 +55,13 @@ $isNew = empty($this->item->id);
             <button type="button" class="btn btn-primary" onclick="Joomla.submitbutton('lend.save')">
                 <?php echo Text::_('JSAVE'); ?>
             </button>
-            <a href="<?php echo Route::_('index.php?option=com_ysinventory&view=lends'); ?>"
+            <a href="<?php echo Route::_('index.php?option=com_ysinventory&view=lends' . $itemIdParam); ?>"
                 class="btn btn-secondary ms-2">
                 <?php echo Text::_('JCANCEL'); ?>
             </a>
         </div>
 
+        <input type="hidden" name="id" value="<?php echo (int) $this->item->id; ?>">
         <input type="hidden" name="task" value="">
         <?php echo HTMLHelper::_('form.token'); ?>
     </form>
