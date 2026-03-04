@@ -23,10 +23,7 @@ require_once JPATH_COMPONENT . '/tmpl/lend_status_helper.php';
 
 $item = $this->item;
 
-$statusLabels = array_map(
-    static fn (array $statusInfo): string => $statusInfo[0],
-    ysinventoryGetLendStatusLabels()
-);
+$statusLabels = ysinventoryGetLendStatusLabels();
 
 $assetStatusMapping = [
     '' => ['class' => 'secondary', 'text' => 'JNONE'],
@@ -259,8 +256,13 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
                             </thead>
                             <tbody>
                                 <?php foreach ($this->borrowings as $lend): ?>
+                                    <?php $statusInfo = $statusLabels[(int) $lend->ysi_status] ?? ['JUNKNOWN', 'secondary']; ?>
                                     <tr>
-                                        <td><?php echo Text::_($statusLabels[(int) $lend->ysi_status] ?? ''); ?></td>
+                                        <td>
+                                            <span class="badge bg-<?php echo $statusInfo[1]; ?>">
+                                                <?php echo Text::_($statusInfo[0]); ?>
+                                            </span>
+                                        </td>
                                         <td class="d-none d-md-table-cell"><?php echo HTMLHelper::_('date', $lend->ysi_from, Text::_('DATE_FORMAT_LC4')); ?></td>
                                         <td class="d-none d-md-table-cell"><?php echo HTMLHelper::_('date', $lend->ysi_to, Text::_('DATE_FORMAT_LC4')); ?></td>
                                         <td><?php echo $this->escape($lend->borrower_name ?? ''); ?></td>
