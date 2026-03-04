@@ -37,11 +37,11 @@ The build output is placed in `installation/com_ysinventory-v<version>.zip`.
 
 Current release: **v1.0.0**
 
-See [RELEASE.md](RELEASE.md) for release notes and the design notes for design details.
+See [RELEASE.md](docs/RELEASE.md) for release notes and the design notes for design details.
 
 ## License
 
-GNU General Public License version 2 or later. See [LICENSE](LICENSE).
+GNU General Public License version 2. See [LICENSE](LICENSE).
 
 ## Author
 
