@@ -376,7 +376,6 @@ class LendTable extends Table implements CurrentUserInterface
 
         return [
             'operation'      => $operation,
-            'lend_id'        => $lendId,
             'oldRow'         => $oldRow,
             'loaneeUsername'  => $loaneeUsername,
             'assetName'      => $assetName,
@@ -394,14 +393,14 @@ class LendTable extends Table implements CurrentUserInterface
     {
         $db = $this->getDatabase();
 
-        $message = json_encode([
-            'lend_id'             => $payload['lend_id'],
-            'snapshot'            => $payload['oldRow'],
-            'loanee_username'     => $payload['loaneeUsername'],
-            'asset_name'          => $payload['assetName'],
-            'asset_id'            => $payload['assetId'],
-            'asset_serial_number' => $payload['serialNumber'],
-        ], \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
+        // Flat merge: old row fields + resolved human-readable fields, no nesting.
+        $merged = $payload['oldRow'];
+        $merged['loanee_username']     = $payload['loaneeUsername'];
+        $merged['asset_name']          = $payload['assetName'];
+        $merged['asset_id']            = $payload['assetId'];
+        $merged['asset_serial_number'] = $payload['serialNumber'];
+
+        $message = json_encode($merged, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
 
         $logDate = Factory::getDate()->toSql();
         $actorId = (int) $this->getCurrentUser()->id;
