@@ -20,6 +20,8 @@ use Joomla\CMS\Session\Session;
 
 /** @var \YakShaver\Component\Ysinventory\Administrator\View\Items\HtmlView $this */
 
+require_once JPATH_SITE . '/components/com_ysinventory/tmpl/lend_status_helper.php';
+
 /** @var \Joomla\CMS\WebAsset\WebAssetManager $wa */
 $wa = $this->getDocument()->getWebAssetManager();
 $wa->useScript('table.columns')
@@ -30,6 +32,7 @@ $userId = $user->id;
 $listOrder = $this->escape($this->state->get('list.ordering'));
 $listDirn = $this->escape($this->state->get('list.direction'));
 $saveOrder = $listOrder == 'a.ordering';
+$assetStatusMapping = ysinventoryGetAssetStatusMapping();
 
 if ($saveOrder && !empty($this->items)) {
     $saveOrderingUrl = 'index.php?option=com_ysinventory&task=items.saveOrderAjax&tmpl=component&' . Session::getFormToken() . '=1';
@@ -155,16 +158,7 @@ if ($saveOrder && !empty($this->items)) {
                                         <?php echo $this->escape($item->category_title ?? ''); ?>
                                     </td>
                                     <td class="text-center d-none d-md-table-cell">
-                                        <?php
-                                        $statusMapping = [
-                                            '' => ['class' => 'secondary', 'text' => 'JNONE'],
-                                            1 => ['class' => 'success', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_IN_STOCK'],
-                                            2 => ['class' => 'primary', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_ON_LOAN'],
-                                            3 => ['class' => 'warning', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_MAINTENANCE'],
-                                            4 => ['class' => 'danger', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_LOST'],
-                                        ];
-                                        $status = $statusMapping[$item->ysi_status ?? ''] ?? $statusMapping[''];
-                                        ?>
+                                        <?php $status = $assetStatusMapping[$item->ysi_status ?? ''] ?? $assetStatusMapping['']; ?>
                                         <span class="badge bg-<?php echo $status['class']; ?>">
                                             <?php echo Text::_($status['text']); ?>
                                         </span>

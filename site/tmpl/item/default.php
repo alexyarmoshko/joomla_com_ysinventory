@@ -25,13 +25,7 @@ $item = $this->item;
 
 $statusLabels = ysinventoryGetLendStatusLabels();
 
-$assetStatusMapping = [
-    '' => ['class' => 'secondary', 'text' => 'JNONE'],
-    1 => ['class' => 'success', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_IN_STOCK'],
-    2 => ['class' => 'primary', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_ON_LOAN'],
-    3 => ['class' => 'warning', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_MAINTENANCE'],
-    4 => ['class' => 'danger', 'text' => 'COM_YSINVENTORY_ASSET_STATUS_LOST'],
-];
+$assetStatusMapping = ysinventoryGetAssetStatusMapping();
 $assetStatus = $assetStatusMapping[$item->ysi_status ?? ''] ?? $assetStatusMapping[''];
 $activeTab = $this->activeTab ?? 'details';
 $itemId = Factory::getApplication()->getInput()->getInt('Itemid');
@@ -251,7 +245,7 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
                                     <th class="d-none d-md-table-cell"><?php echo Text::_('COM_YSINVENTORY_BORROWINGS_FROM'); ?></th>
                                     <th class="d-none d-md-table-cell"><?php echo Text::_('COM_YSINVENTORY_BORROWINGS_TO'); ?></th>
                                     <th><?php echo Text::_('COM_YSINVENTORY_BORROWINGS_BORROWER'); ?></th>
-                                    <th class="d-none d-md-table-cell"><?php echo Text::_('COM_YSINVENTORY_BORROWINGS_CREATED'); ?></th>
+                                    <th class="d-none d-md-table-cell"><?php echo Text::_('JGLOBAL_FIELD_CREATED_LABEL'); ?></th>
                                 </tr>
                             </thead>
                             <tbody>
