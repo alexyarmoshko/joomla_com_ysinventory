@@ -16,6 +16,7 @@ namespace YakShaver\Component\Ysinventory\Administrator\Table;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\Table\Table;
 use Joomla\CMS\User\CurrentUserInterface;
 use Joomla\CMS\User\CurrentUserTrait;
@@ -48,6 +49,15 @@ class LendTable extends Table implements CurrentUserInterface
 
     public function store($updateNulls = true)
     {
+        $isUpdate = (bool) $this->id;
+
+        // Journal: capture old row snapshot before update (written only after success).
+        $journalPayload = null;
+
+        if ($isUpdate) {
+            $journalPayload = $this->prepareJournalEntry((int) $this->id, 'U');
+        }
+
         $date = Factory::getDate()->toSql();
         $userId = $this->getCurrentUser()->id;
 
@@ -76,7 +86,13 @@ class LendTable extends Table implements CurrentUserInterface
         $needsStockGuard = ($status === 2 && $this->oldStatus !== 2);
 
         if (!$needsStockGuard) {
-            return parent::store($updateNulls);
+            $result = parent::store($updateNulls);
+
+            if ($result && $journalPayload) {
+                $this->commitJournalEntry($journalPayload);
+            }
+
+            return $result;
         }
 
         // Transactional stock guard with row-level lock (Finding 7).
@@ -129,6 +145,10 @@ class LendTable extends Table implements CurrentUserInterface
             }
 
             $db->transactionCommit();
+
+            if ($journalPayload) {
+                $this->commitJournalEntry($journalPayload);
+            }
 
             return true;
         } catch (\Exception $e) {
@@ -267,9 +287,163 @@ class LendTable extends Table implements CurrentUserInterface
         return true;
     }
 
+    public function delete($pk = null)
+    {
+        $pk = $pk ?: $this->{$this->_tbl_key};
+
+        // Journal: capture old row snapshot before delete (written only after success).
+        $journalPayload = null;
+
+        if ($pk) {
+            $journalPayload = $this->prepareJournalEntry((int) $pk, 'D');
+        }
+
+        $result = parent::delete($pk);
+
+        if ($result && $journalPayload) {
+            $this->commitJournalEntry($journalPayload);
+        }
+
+        return $result;
+    }
+
     public function getTypeAlias()
     {
         return $this->typeAlias;
+    }
+
+    /**
+     * Capture the pre-change lend row and related human-readable fields.
+     *
+     * Returns an associative array ready for commitJournalEntry(), or null
+     * when the source row cannot be loaded.
+     */
+    private function prepareJournalEntry(int $lendId, string $operation): ?array
+    {
+        $db = $this->getDatabase();
+
+        // Load the current (pre-change) lend row.
+        $query = $db->getQuery(true)
+            ->select('*')
+            ->from($db->quoteName('#__ysi_lends'))
+            ->where($db->quoteName('id') . ' = :lendId')
+            ->bind(':lendId', $lendId, ParameterType::INTEGER);
+        $db->setQuery($query);
+        $oldRow = $db->loadAssoc();
+
+        if (empty($oldRow)) {
+            return null;
+        }
+
+        // Resolve human-readable message fields.
+        $itemId = (int) ($oldRow['ysi_item_id'] ?? 0);
+        $loaneeId = (int) ($oldRow['ysi_user_id'] ?? 0);
+
+        $loaneeUsername = '';
+        $assetName = '';
+        $assetId = '';
+        $assetSerialNumber = '';
+
+        if ($loaneeId > 0) {
+            $query = $db->getQuery(true)
+                ->select($db->quoteName('username'))
+                ->from($db->quoteName('#__users'))
+                ->where($db->quoteName('id') . ' = :uid')
+                ->bind(':uid', $loaneeId, ParameterType::INTEGER);
+            $db->setQuery($query);
+            $loaneeUsername = (string) $db->loadResult();
+        }
+
+        if ($itemId > 0) {
+            $query = $db->getQuery(true)
+                ->select([
+                    $db->quoteName('name'),
+                    $db->quoteName('ysi_sku'),
+                    $db->quoteName('ysi_serial_number'),
+                ])
+                ->from($db->quoteName('#__ysi_items'))
+                ->where($db->quoteName('id') . ' = :iid')
+                ->bind(':iid', $itemId, ParameterType::INTEGER);
+            $db->setQuery($query);
+            $itemRow = $db->loadAssoc();
+
+            if ($itemRow) {
+                $assetName = (string) ($itemRow['name'] ?? '');
+                $assetId = (string) ($itemRow['ysi_sku'] ?? '');
+                $assetSerialNumber = (string) ($itemRow['ysi_serial_number'] ?? '');
+            }
+        }
+
+        return [
+            'operation'      => $operation,
+            'lend_id'        => $lendId,
+            'oldRow'         => $oldRow,
+            'loaneeUsername'  => $loaneeUsername,
+            'assetName'      => $assetName,
+            'assetId'        => $assetId,
+            'serialNumber'   => $assetSerialNumber,
+        ];
+    }
+
+    /**
+     * Insert a prepared journal entry into #__ysi_lends_log.
+     *
+     * Must only be called after the primary operation has succeeded.
+     */
+    private function commitJournalEntry(array $payload): void
+    {
+        $db = $this->getDatabase();
+
+        $message = json_encode([
+            'lend_id'             => $payload['lend_id'],
+            'snapshot'            => $payload['oldRow'],
+            'loanee_username'     => $payload['loaneeUsername'],
+            'asset_name'          => $payload['assetName'],
+            'asset_id'            => $payload['assetId'],
+            'asset_serial_number' => $payload['serialNumber'],
+        ], \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
+
+        $logDate = Factory::getDate()->toSql();
+        $actorId = (int) $this->getCurrentUser()->id;
+        $operation = $payload['operation'];
+
+        $columns = [
+            'user_id',
+            'log_date',
+            'operation',
+            'message',
+        ];
+
+        $query = $db->getQuery(true)
+            ->insert($db->quoteName('#__ysi_lends_log'))
+            ->columns($db->quoteName($columns))
+            ->values(implode(',', [
+                ':actorId',
+                ':logDate',
+                ':op',
+                ':message',
+            ]))
+            ->bind(':actorId', $actorId, ParameterType::INTEGER)
+            ->bind(':logDate', $logDate)
+            ->bind(':op', $operation)
+            ->bind(':message', $message);
+
+        try {
+            $db->setQuery($query);
+            $db->execute();
+        } catch (\Exception $e) {
+            // Journal write failure must not block the primary operation.
+            // Log detail for debugging; show generic message to user.
+            Log::add(
+                'Journal write failed: ' . $e->getMessage(),
+                Log::WARNING,
+                'com_ysinventory'
+            );
+            Factory::getApplication()->enqueueMessage(
+                Text::_('COM_YSINVENTORY_WARNING_JOURNAL_WRITE_FAILED'),
+                'warning'
+            );
+        }
     }
 
     private function normalizeDateValue(string $value): ?string

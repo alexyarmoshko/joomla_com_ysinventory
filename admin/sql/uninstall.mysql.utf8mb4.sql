@@ -1,5 +1,6 @@
 -- Yak Shaver Inventory — uninstall SQL
 
+DROP TABLE IF EXISTS `#__ysi_lends_log`;
 DROP TABLE IF EXISTS `#__ysi_lends`;
 DROP TABLE IF EXISTS `#__ysi_item_tag_map`;
 DROP TABLE IF EXISTS `#__ysi_items`;
