@@ -25,78 +25,37 @@ class DisplayController extends BaseController
      */
     protected $default_view = 'inventories';
 
+    /**
+     * Edit-view to list-view mapping for edit-lock checks.
+     *
+     * @var array<string, string>
+     */
+    private const EDIT_VIEW_MAP = [
+        'inventory' => 'inventories',
+        'category'  => 'categories',
+        'brand'     => 'brands',
+        'taggroup'  => 'taggroups',
+        'tag'       => 'tags',
+        'item'      => 'items',
+        'lend'      => 'lends',
+    ];
+
     public function display($cachable = false, $urlparams = [])
     {
-        $view = $this->input->get('view', $this->default_view);
+        $view   = $this->input->get('view', $this->default_view);
         $layout = $this->input->get('layout', 'default');
-        $id = $this->input->getInt('id');
+        $id     = $this->input->getInt('id');
 
-        if ($view == 'inventory' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.inventory', $id)) {
+        if ($layout === 'edit' && isset(self::EDIT_VIEW_MAP[$view])
+            && !$this->checkEditId('com_ysinventory.edit.' . $view, $id)
+        ) {
             if (!\count($this->app->getMessageQueue())) {
                 $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
             }
 
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=inventories', false));
-
-            return false;
-        }
-
-        if ($view == 'category' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.category', $id)) {
-            if (!\count($this->app->getMessageQueue())) {
-                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
-            }
-
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=categories', false));
-
-            return false;
-        }
-
-        if ($view == 'brand' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.brand', $id)) {
-            if (!\count($this->app->getMessageQueue())) {
-                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
-            }
-
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=brands', false));
-
-            return false;
-        }
-
-        if ($view == 'taggroup' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.taggroup', $id)) {
-            if (!\count($this->app->getMessageQueue())) {
-                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
-            }
-
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=taggroups', false));
-
-            return false;
-        }
-
-        if ($view == 'tag' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.tag', $id)) {
-            if (!\count($this->app->getMessageQueue())) {
-                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
-            }
-
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=tags', false));
-
-            return false;
-        }
-
-        if ($view == 'item' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.item', $id)) {
-            if (!\count($this->app->getMessageQueue())) {
-                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
-            }
-
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=items', false));
-
-            return false;
-        }
-
-        if ($view == 'lend' && $layout == 'edit' && !$this->checkEditId('com_ysinventory.edit.lend', $id)) {
-            if (!\count($this->app->getMessageQueue())) {
-                $this->setMessage(\Joomla\CMS\Language\Text::sprintf('JLIB_APPLICATION_ERROR_UNHELD_ID', $id), 'error');
-            }
-
-            $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=lends', false));
+            $this->setRedirect(
+                \Joomla\CMS\Router\Route::_('index.php?option=com_ysinventory&view=' . self::EDIT_VIEW_MAP[$view], false)
+            );
 
             return false;
         }

@@ -23,8 +23,6 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Joomla\Database\ParameterType;
-use Joomla\Registry\Registry;
 
 class LendController extends FormController
 {
@@ -77,7 +75,7 @@ class LendController extends FormController
             return false;
         }
 
-        $app = Factory::getApplication();
+        $app  = Factory::getApplication();
         $user = $app->getIdentity();
 
         // Must be logged in.
@@ -89,144 +87,19 @@ class LendController extends FormController
         }
 
         // Extract input.
-        $input = $app->getInput();
+        $input  = $app->getInput();
         $itemId = $input->getInt('ysi_item_id', 0);
-        $from = $input->getString('ysi_from', '');
-        $to = $input->getString('ysi_to', '');
-        $note = $input->getString('ysi_note', '');
+        $from   = $input->getString('ysi_from', '');
+        $to     = $input->getString('ysi_to', '');
+        $note   = $input->getString('ysi_note', '');
 
         $returnUrl = Route::_('index.php?option=com_ysinventory&view=item&id=' . $itemId, false);
 
-        // Load item with access and catid.
-        $db = Factory::getContainer()->get('DatabaseDriver');
-        $query = $db->getQuery(true)
-            ->select($db->quoteName(['id', 'ysi_quantity', 'access', 'catid']))
-            ->from($db->quoteName('#__ysi_items'))
-            ->where($db->quoteName('id') . ' = :itemId')
-            ->where($db->quoteName('published') . ' = 1')
-            ->bind(':itemId', $itemId, ParameterType::INTEGER);
-        $db->setQuery($query);
-        $item = $db->loadObject();
+        /** @var \YakShaver\Component\Ysinventory\Site\Model\LendModel $model */
+        $model = $this->getModel('Lend', 'Site');
 
-        if (!$item) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_ITEM_NOT_FOUND'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ysinventory&view=items', false));
-
-            return false;
-        }
-
-        // Access check (Finding 5): verify the user can view this item.
-        if (!\in_array((int) $item->access, $user->getAuthorisedViewLevels(), true)) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_ACCESS_DENIED'), 'error');
-            $this->setRedirect(Route::_('index.php?option=com_ysinventory&view=items', false));
-
-            return false;
-        }
-
-        // Category-level auth with fallback to component params (Findings 1+2).
-        $componentParams = ComponentHelper::getParams('com_ysinventory');
-        $catParams = new Registry('{}');
-
-        if ((int) $item->catid > 0) {
-            $catQuery = $db->getQuery(true)
-                ->select($db->quoteName('params'))
-                ->from($db->quoteName('#__ysi_categories'))
-                ->where($db->quoteName('id') . ' = :catId')
-                ->bind(':catId', $item->catid, ParameterType::INTEGER);
-            $db->setQuery($catQuery);
-            $catJson = $db->loadResult();
-
-            if (!empty($catJson) && \is_string($catJson)) {
-                $catParams = new Registry($catJson);
-            }
-        }
-
-        $requestGroups = (array) $catParams->get('ysi_lend_request_groups', []);
-
-        if (empty($requestGroups)) {
-            $requestGroups = (array) $componentParams->get('ysi_lend_request_groups', []);
-        }
-
-        if (empty($requestGroups)) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_CONFIGURED'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        $userGroups = $user->getAuthorisedGroups();
-
-        if (empty(array_intersect($userGroups, $requestGroups))) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_AUTHORISED'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        // Strict date validation (Finding 6).
-        if (empty($from) || empty($to)) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_REQUIRE_DATES'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        $fromDate = \DateTimeImmutable::createFromFormat('Y-m-d', $from);
-        $toDate = \DateTimeImmutable::createFromFormat('Y-m-d', $to);
-
-        if (!$fromDate || $fromDate->format('Y-m-d') !== $from) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        if (!$toDate || $toDate->format('Y-m-d') !== $to) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        $today = Factory::getDate()->format('Y-m-d');
-
-        if ($from < $today) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_FROM_PAST'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        if ($to <= $from) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_DATE_ORDER'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        // Stock check (Finding 3): simple quantity > 0 check.
-        if ((int) $item->ysi_quantity <= 0) {
-            $this->setMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NO_STOCK'), 'error');
-            $this->setRedirect($returnUrl);
-
-            return false;
-        }
-
-        // Create lend record via Table.
-        $table = $this->factory->createTable('Lend', 'Administrator');
-        $table->setCurrentUser($user);
-
-        $data = [
-            'ysi_item_id' => $itemId,
-            'ysi_user_id' => $user->id,
-            'ysi_from' => $from,
-            'ysi_to' => $to,
-            'ysi_note' => $note,
-            'ysi_status' => 1,
-        ];
-
-        if (!$table->bind($data) || !$table->check() || !$table->store()) {
-            $this->setMessage($table->getError(), 'error');
+        if (!$model->requestLoan($user, $itemId, $from, $to, $note)) {
+            $this->setMessage($model->getError(), 'error');
             $this->setRedirect($returnUrl);
 
             return false;

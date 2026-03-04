@@ -17,6 +17,7 @@ namespace YakShaver\Component\Ysinventory\Site\Model;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
@@ -292,6 +293,138 @@ class LendModel extends AdminModel
         }
 
         return false;
+    }
+
+    /**
+     * Process a loan request from the frontend item detail page.
+     *
+     * Validates the item, access, group authorization, dates, and stock,
+     * then creates a new lend record with status "Requested".
+     *
+     * @param   \Joomla\CMS\User\User  $user    The requesting user.
+     * @param   int                     $itemId  The asset ID.
+     * @param   string                  $from    Start date (Y-m-d).
+     * @param   string                  $to      End date (Y-m-d).
+     * @param   string                  $note    Optional note.
+     *
+     * @return  bool  True on success, false on failure (error set via setError).
+     */
+    public function requestLoan($user, int $itemId, string $from, string $to, string $note): bool
+    {
+        // Load item with access and catid.
+        $db = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName(['id', 'ysi_quantity', 'access', 'catid']))
+            ->from($db->quoteName('#__ysi_items'))
+            ->where($db->quoteName('id') . ' = :itemId')
+            ->where($db->quoteName('published') . ' = 1')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER);
+        $db->setQuery($query);
+        $item = $db->loadObject();
+
+        if (!$item) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_ITEM_NOT_FOUND'));
+
+            return false;
+        }
+
+        // Access check: verify the user can view this item.
+        if (!\in_array((int) $item->access, $user->getAuthorisedViewLevels(), true)) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_ACCESS_DENIED'));
+
+            return false;
+        }
+
+        // Category-level auth with fallback to component params.
+        $componentParams = ComponentHelper::getParams('com_ysinventory');
+
+        /** @var ItemModel $itemModel */
+        $itemModel = $this->getMVCFactory()->createModel('Item', 'Site', ['ignore_request' => true]);
+        $catParams = $itemModel->getCategoryParams((int) $item->catid);
+
+        $requestGroups = (array) $catParams->get('ysi_lend_request_groups', []);
+
+        if (empty($requestGroups)) {
+            $requestGroups = (array) $componentParams->get('ysi_lend_request_groups', []);
+        }
+
+        if (empty($requestGroups)) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_CONFIGURED'));
+
+            return false;
+        }
+
+        $userGroups = $user->getAuthorisedGroups();
+
+        if (empty(array_intersect($userGroups, $requestGroups))) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_AUTHORISED'));
+
+            return false;
+        }
+
+        // Date validation.
+        if (empty($from) || empty($to)) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_REQUIRE_DATES'));
+
+            return false;
+        }
+
+        $fromDate = \DateTimeImmutable::createFromFormat('Y-m-d', $from);
+        $toDate   = \DateTimeImmutable::createFromFormat('Y-m-d', $to);
+
+        if (!$fromDate || $fromDate->format('Y-m-d') !== $from) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'));
+
+            return false;
+        }
+
+        if (!$toDate || $toDate->format('Y-m-d') !== $to) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_INVALID_DATE_FORMAT'));
+
+            return false;
+        }
+
+        $today = Factory::getDate()->format('Y-m-d');
+
+        if ($from < $today) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_FROM_PAST'));
+
+            return false;
+        }
+
+        if ($to <= $from) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_DATE_ORDER'));
+
+            return false;
+        }
+
+        // Stock check.
+        if ((int) $item->ysi_quantity <= 0) {
+            $this->setError(Text::_('COM_YSINVENTORY_ERROR_LEND_NO_STOCK'));
+
+            return false;
+        }
+
+        // Create lend record via Table.
+        $table = $this->getTable('Lend', 'Administrator');
+        $table->setCurrentUser($user);
+
+        $data = [
+            'ysi_item_id' => $itemId,
+            'ysi_user_id' => $user->id,
+            'ysi_from'    => $from,
+            'ysi_to'      => $to,
+            'ysi_note'    => $note,
+            'ysi_status'  => 1,
+        ];
+
+        if (!$table->bind($data) || !$table->check() || !$table->store()) {
+            $this->setError($table->getError());
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
