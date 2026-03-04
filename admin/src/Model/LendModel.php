@@ -40,10 +40,15 @@ class LendModel extends AdminModel
 
         // Use the actual record for authorization when $data is empty (form bootstrap).
         $stateCheckData = $data;
+        $item           = $this->getItem();
 
-        if (empty($stateCheckData) || empty($stateCheckData['ysi_item_id'] ?? null)) {
-            $stateCheckData = $this->getItem();
+        if (empty($stateCheckData) || (int) $this->extractFieldValue($stateCheckData, 'ysi_item_id') <= 0) {
+            $stateCheckData = $item;
         }
+
+        $itemId   = (int) $this->extractFieldValue($stateCheckData, 'ysi_item_id', $this->getRequestedItemId());
+        $groupIds = $this->getRequestGroupIds($itemId);
+        $form->setFieldAttribute('ysi_user_id', 'groups', !empty($groupIds) ? implode(',', $groupIds) : '-1');
 
         if (!$this->canEditState((object) $stateCheckData)) {
             $form->setFieldAttribute('ysi_status', 'disabled', 'true');
@@ -143,5 +148,102 @@ class LendModel extends AdminModel
         }
 
         return false;
+    }
+
+    private function getRequestGroupIds(int $itemId): array
+    {
+        $globalGroups = $this->sanitizeGroupIds(
+            (array) ComponentHelper::getParams('com_ysinventory')->get('ysi_lend_request_groups', [])
+        );
+
+        if ($itemId > 0) {
+            $categoryGroups = $this->getCategoryRequestGroupsByItemId($itemId);
+
+            if (!empty($categoryGroups)) {
+                return $categoryGroups;
+            }
+
+            return $globalGroups;
+        }
+
+        $allGroups = $globalGroups;
+        $db        = $this->getDatabase();
+        $query     = $db->getQuery(true)
+            ->select($db->quoteName('params'))
+            ->from($db->quoteName('#__ysi_categories'));
+        $db->setQuery($query);
+        $rows = $db->loadColumn() ?: [];
+
+        foreach ($rows as $paramsJson) {
+            if (!\is_string($paramsJson) || trim($paramsJson) === '') {
+                continue;
+            }
+
+            $params    = new Registry($paramsJson);
+            $allGroups = array_merge($allGroups, (array) $params->get('ysi_lend_request_groups', []));
+        }
+
+        return $this->sanitizeGroupIds($allGroups);
+    }
+
+    private function getCategoryRequestGroupsByItemId(int $itemId): array
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('catid'))
+            ->from($db->quoteName('#__ysi_items'))
+            ->where($db->quoteName('id') . ' = :itemId')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER);
+        $db->setQuery($query);
+        $catId = (int) $db->loadResult();
+
+        if ($catId <= 0) {
+            return [];
+        }
+
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('params'))
+            ->from($db->quoteName('#__ysi_categories'))
+            ->where($db->quoteName('id') . ' = :catId')
+            ->bind(':catId', $catId, ParameterType::INTEGER);
+        $db->setQuery($query);
+        $paramsJson = $db->loadResult();
+
+        if (!\is_string($paramsJson) || trim($paramsJson) === '') {
+            return [];
+        }
+
+        $params = new Registry($paramsJson);
+
+        return $this->sanitizeGroupIds((array) $params->get('ysi_lend_request_groups', []));
+    }
+
+    private function sanitizeGroupIds(array $groupIds): array
+    {
+        $groupIds = array_map('intval', $groupIds);
+        $groupIds = array_filter($groupIds, static fn (int $id): bool => $id > 0);
+        $groupIds = array_values(array_unique($groupIds));
+
+        return $groupIds;
+    }
+
+    private function extractFieldValue($data, string $field, $default = null)
+    {
+        if (\is_array($data)) {
+            return $data[$field] ?? $default;
+        }
+
+        if (\is_object($data) && isset($data->$field)) {
+            return $data->$field;
+        }
+
+        return $default;
+    }
+
+    private function getRequestedItemId(): int
+    {
+        $jform = Factory::getApplication()->getInput()->get('jform', [], 'array');
+
+        return (int) ($jform['ysi_item_id'] ?? 0);
     }
 }

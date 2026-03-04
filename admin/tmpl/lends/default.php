@@ -19,6 +19,8 @@ use Joomla\CMS\Router\Route;
 
 /** @var \YakShaver\Component\Ysinventory\Administrator\View\Lends\HtmlView $this */
 
+require_once JPATH_SITE . '/components/com_ysinventory/tmpl/lend_status_helper.php';
+
 /** @var \Joomla\CMS\WebAsset\WebAssetManager $wa */
 $wa = $this->getDocument()->getWebAssetManager();
 $wa->useScript('table.columns')
@@ -28,14 +30,7 @@ $user = $this->getCurrentUser();
 $listOrder = $this->escape($this->state->get('list.ordering'));
 $listDirn = $this->escape($this->state->get('list.direction'));
 
-$statusLabels = [
-    1 => ['COM_YSINVENTORY_LEND_STATUS_REQUESTED', 'warning'],
-    2 => ['COM_YSINVENTORY_LEND_STATUS_BORROWED', 'primary'],
-    3 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED', 'success'],
-    4 => ['COM_YSINVENTORY_LEND_STATUS_LOST', 'danger'],
-    5 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED', 'warning'],
-    6 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE', 'danger'],
-];
+$statusLabels = ysinventoryGetLendStatusLabels();
 ?>
 <form action="<?php echo Route::_('index.php?option=com_ysinventory&view=lends'); ?>" method="post" name="adminForm"
     id="adminForm">

@@ -71,6 +71,16 @@
 - Stock guard prevents approving borrows when all units are lent out
 - Borrowings (Loan History) tab now uses Joomla standard server-side pagination (`getListFooter`) with consistent "Per page" control
 - Fixed frontend loan edit form loading by packaging `site/forms` and adding form-path fallback in site `LendModel`
+- Fixed frontend loan new/edit form reliability and localization:
+  - Corrected site lend edit submit routing/context (`view=lend`, `id`, `Itemid`) so edits persist to the intended record
+  - Added missing site lend language keys for form descriptions/placeholders to remove raw key output
+- Updated frontend loans management UX:
+  - Added explicit edit action in site loans list
+  - Removed asset detail-page link from site loans list asset column
+- Updated loanee selection policy across site and admin lend forms:
+  - Site loanee selector uses searchable fancy-select SQL list with person name only
+  - Site loan edit locks Asset and Loanee fields (editable on New Loan only)
+  - Loanee options are filtered to users in effective `ysi_lend_request_groups` (category override, global fallback) in both site and admin lend forms
 
 ### Cross-phase — Frontend menu integration
 

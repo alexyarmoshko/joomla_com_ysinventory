@@ -31,7 +31,7 @@
             required="true"
             key_field="value"
             value_field="text"
-            query="SELECT id AS value, CONCAT(name, ' (', username, ')') AS text FROM #__users WHERE block = 0 ORDER BY name"
+            query="SELECT id AS value, name AS text FROM #__users WHERE block = 0 ORDER BY name"
             layout="joomla.form.field.list-fancy-select"
             class="advancedSelect"
         >

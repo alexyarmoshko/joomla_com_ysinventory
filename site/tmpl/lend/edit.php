@@ -23,6 +23,54 @@ use Joomla\CMS\Factory;
 $wa = $this->getDocument()->getWebAssetManager();
 $wa->useScript('keepalive')
     ->useScript('form.validate');
+$wa->addInlineStyle(<<<'CSS'
+.com-ysinventory-lend-edit .row,
+.com-ysinventory-lend-edit [class*="col-"] {
+    overflow: visible;
+}
+
+.com-ysinventory-lend-edit joomla-field-fancy-select {
+    display: block;
+}
+
+.com-ysinventory-lend-edit joomla-field-fancy-select .choices {
+    position: relative;
+    margin-bottom: 0;
+}
+
+.com-ysinventory-lend-edit joomla-field-fancy-select .choices__list--dropdown,
+.com-ysinventory-lend-edit joomla-field-fancy-select .choices__list[aria-expanded] {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-top: 0.35rem;
+    max-height: 18rem;
+    overflow-y: auto;
+    background-color: #f3f4f6;
+    opacity: 1;
+    z-index: 1090;
+}
+
+.com-ysinventory-lend-edit joomla-field-fancy-select .choices__list--dropdown .choices__item,
+.com-ysinventory-lend-edit joomla-field-fancy-select .choices__list[aria-expanded] .choices__item {
+    background-color: #f3f4f6;
+}
+
+.com-ysinventory-lend-edit joomla-field-fancy-select .choices__list--dropdown .choices__item--selectable[aria-selected='true'],
+.com-ysinventory-lend-edit joomla-field-fancy-select .choices__list[aria-expanded] .choices__item--selectable[aria-selected='true'] {
+    background-color: #e5e7eb;
+}
+
+.com-ysinventory-lend-edit .calendar-container {
+    --btn-primary-bg: #0d6efd;
+    --btn-primary-color: #ffffff;
+    --calendar-bg: #ffffff;
+    --calendar-disabled-bg: #f3f4f6;
+    --calendar-disabled-color: #9ca3af;
+}
+CSS
+);
 
 $isNew = empty($this->item->id);
 $itemId = Factory::getApplication()->getInput()->getInt('Itemid');
@@ -62,6 +110,10 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
         </div>
 
         <input type="hidden" name="id" value="<?php echo (int) $this->item->id; ?>">
+        <?php if (!$isNew) : ?>
+            <input type="hidden" name="jform[ysi_item_id]" value="<?php echo (int) $this->item->ysi_item_id; ?>">
+            <input type="hidden" name="jform[ysi_user_id]" value="<?php echo (int) $this->item->ysi_user_id; ?>">
+        <?php endif; ?>
         <input type="hidden" name="task" value="">
         <?php echo HTMLHelper::_('form.token'); ?>
     </form>

@@ -20,19 +20,14 @@ use Joomla\CMS\Session\Session;
 
 /** @var \YakShaver\Component\Ysinventory\Site\View\Lends\HtmlView $this */
 
+require_once JPATH_COMPONENT . '/tmpl/lend_status_helper.php';
+
 $state = $this->state;
 $isModerator = $this->isModerator;
 $itemId = Factory::getApplication()->getInput()->getInt('Itemid');
 $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
 
-$statusLabels = [
-    1 => ['COM_YSINVENTORY_LEND_STATUS_REQUESTED', 'warning'],
-    2 => ['COM_YSINVENTORY_LEND_STATUS_BORROWED', 'primary'],
-    3 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED', 'success'],
-    4 => ['COM_YSINVENTORY_LEND_STATUS_LOST', 'danger'],
-    5 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED', 'warning'],
-    6 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE', 'danger'],
-];
+$statusLabels = ysinventoryGetLendStatusLabels();
 ?>
 <div class="com-ysinventory-lends">
     <h2>

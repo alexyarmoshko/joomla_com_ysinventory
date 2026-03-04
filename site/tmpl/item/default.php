@@ -19,16 +19,14 @@ use Joomla\CMS\Router\Route;
 
 /** @var \YakShaver\Component\Ysinventory\Site\View\Item\HtmlView $this */
 
+require_once JPATH_COMPONENT . '/tmpl/lend_status_helper.php';
+
 $item = $this->item;
 
-$statusLabels = [
-    1 => 'COM_YSINVENTORY_LEND_STATUS_REQUESTED',
-    2 => 'COM_YSINVENTORY_LEND_STATUS_BORROWED',
-    3 => 'COM_YSINVENTORY_LEND_STATUS_RETURNED',
-    4 => 'COM_YSINVENTORY_LEND_STATUS_LOST',
-    5 => 'COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED',
-    6 => 'COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE',
-];
+$statusLabels = array_map(
+    static fn (array $statusInfo): string => $statusInfo[0],
+    ysinventoryGetLendStatusLabels()
+);
 
 $assetStatusMapping = [
     '' => ['class' => 'secondary', 'text' => 'JNONE'],
