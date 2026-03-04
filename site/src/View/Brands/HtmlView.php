@@ -16,6 +16,7 @@ namespace YakShaver\Component\Ysinventory\Site\View\Brands;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\MVC\View\GenericDataException;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 
 class HtmlView extends BaseHtmlView
@@ -31,6 +32,10 @@ class HtmlView extends BaseHtmlView
         $this->items = $model->getItems();
         $this->pagination = $model->getPagination();
         $this->state = $model->getState();
+
+        if (\count($errors = $model->getErrors())) {
+            throw new GenericDataException(implode("\n", $errors), 500);
+        }
 
         if (!\is_array($this->items)) {
             $this->items = [];

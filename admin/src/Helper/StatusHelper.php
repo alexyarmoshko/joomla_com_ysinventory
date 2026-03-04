@@ -1,24 +1,30 @@
 <?php
 
 /**
- * Yak Shaver Inventory - lend status template helper
+ * Yak Shaver Inventory — status mapping helper
+ *
+ * Provides lend status and asset status label/badge mappings
+ * used across admin and site templates.
  *
  * @package     YakShaver\Component\Ysinventory
- * @subpackage  Site
+ * @subpackage  Administrator
  * @author      Yak Shaver <me@kayakshaver.com>
  * @copyright   (C) 2026 Yak Shaver https://www.kayakshaver.com
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
+namespace YakShaver\Component\Ysinventory\Administrator\Helper;
+
 \defined('_JEXEC') or die;
 
-if (!function_exists('ysinventoryGetLendStatusLabels')) {
+class StatusHelper
+{
     /**
      * Return lend status language keys and badge styles keyed by status id.
      *
      * @return  array<int, array{0: string, 1: string}>
      */
-    function ysinventoryGetLendStatusLabels(): array
+    public static function getLendStatusLabels(): array
     {
         return [
             1 => ['COM_YSINVENTORY_LEND_STATUS_REQUESTED', 'warning'],
@@ -29,15 +35,13 @@ if (!function_exists('ysinventoryGetLendStatusLabels')) {
             6 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE', 'danger'],
         ];
     }
-}
 
-if (!function_exists('ysinventoryGetAssetStatusMapping')) {
     /**
      * Return asset status language keys and badge styles keyed by status id.
      *
      * @return  array<int|string, array{class: string, text: string}>
      */
-    function ysinventoryGetAssetStatusMapping(): array
+    public static function getAssetStatusMapping(): array
     {
         return [
             '' => ['class' => 'secondary', 'text' => 'JNONE'],

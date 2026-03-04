@@ -21,6 +21,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
+use YakShaver\Component\Ysinventory\Administrator\Helper\ModeratorHelper;
 
 class LendModel extends AdminModel
 {
@@ -436,25 +437,6 @@ class LendModel extends AdminModel
      */
     public function isModerator($user)
     {
-        if ($user->guest) {
-            return false;
-        }
-
-        if ($user->authorise('core.edit', 'com_ysinventory')) {
-            return true;
-        }
-
-        $moderationGroups = (array) ComponentHelper::getParams('com_ysinventory')
-            ->get('ysi_lend_moderation_groups', []);
-
-        if (!empty($moderationGroups)) {
-            $userGroups = $user->getAuthorisedGroups();
-
-            if (!empty(array_intersect($userGroups, $moderationGroups))) {
-                return true;
-            }
-        }
-
-        return false;
+        return ModeratorHelper::isModerator($user);
     }
 }

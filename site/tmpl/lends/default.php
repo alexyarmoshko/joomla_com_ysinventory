@@ -17,17 +17,16 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use YakShaver\Component\Ysinventory\Administrator\Helper\StatusHelper;
 
 /** @var \YakShaver\Component\Ysinventory\Site\View\Lends\HtmlView $this */
-
-require_once JPATH_COMPONENT . '/tmpl/lend_status_helper.php';
 
 $state = $this->state;
 $isModerator = $this->isModerator;
 $itemId = Factory::getApplication()->getInput()->getInt('Itemid');
 $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
 
-$statusLabels = ysinventoryGetLendStatusLabels();
+$statusLabels = StatusHelper::getLendStatusLabels();
 ?>
 <div class="com-ysinventory-lends">
     <h2>

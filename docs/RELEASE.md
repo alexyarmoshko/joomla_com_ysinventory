@@ -40,4 +40,5 @@ Initial release.
 - PSR-12 coding standards
 - Joomla ACL integration with component and per-category permissions
 - Full localization via language files (admin and site)
+- Centralized helper classes (`StatusHelper`, `ModeratorHelper`) eliminating cross-boundary dependencies and code duplication
 - Makefile for repeatable build packaging

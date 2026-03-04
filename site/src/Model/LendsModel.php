@@ -14,11 +14,10 @@ namespace YakShaver\Component\Ysinventory\Site\Model;
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
-use Joomla\Registry\Registry;
+use YakShaver\Component\Ysinventory\Administrator\Helper\ModeratorHelper;
 
 class LendsModel extends ListModel
 {
@@ -171,35 +170,12 @@ class LendsModel extends ListModel
     /**
      * Check whether the given user belongs to a configured moderation group.
      *
-     * Checks category-level params first (if a category context is available),
-     * then falls back to component-level params.
-     *
      * @param   \Joomla\CMS\User\User  $user  The user to check.
      *
      * @return  bool
      */
     public function isModerator($user)
     {
-        if ($user->guest) {
-            return false;
-        }
-
-        // Component ACL shortcut.
-        if ($user->authorise('core.edit', 'com_ysinventory')) {
-            return true;
-        }
-
-        $moderationGroups = (array) ComponentHelper::getParams('com_ysinventory')
-            ->get('ysi_lend_moderation_groups', []);
-
-        if (!empty($moderationGroups)) {
-            $userGroups = $user->getAuthorisedGroups();
-
-            if (!empty(array_intersect($userGroups, $moderationGroups))) {
-                return true;
-            }
-        }
-
-        return false;
+        return ModeratorHelper::isModerator($user);
     }
 }

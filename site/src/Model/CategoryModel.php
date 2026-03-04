@@ -140,6 +140,55 @@ class CategoryModel extends ListModel
         return $db->loadObjectList() ?: [];
     }
 
+    /**
+     * Load ancestor categories for the current category's path in a single query.
+     *
+     * Returns ancestors in path order, excluding the current category itself.
+     *
+     * @return  array  Array of objects with id and title properties.
+     */
+    public function getAncestors(): array
+    {
+        $category = $this->getCategory();
+
+        if (!$category || empty($category->path)) {
+            return [];
+        }
+
+        $segments = explode('/', $category->path);
+
+        // Build all ancestor path prefixes (excluding the full path = current category).
+        $ancestorPaths = [];
+        $pathSoFar = '';
+
+        foreach ($segments as $segment) {
+            $pathSoFar .= ($pathSoFar !== '' ? '/' : '') . $segment;
+            $ancestorPaths[] = $pathSoFar;
+        }
+
+        // Remove the last entry (current category).
+        array_pop($ancestorPaths);
+
+        if (empty($ancestorPaths)) {
+            return [];
+        }
+
+        $db = $this->getDatabase();
+        $user = Factory::getApplication()->getIdentity();
+
+        $query = $db->getQuery(true)
+            ->select($db->quoteName(['id', 'title', 'path']))
+            ->from($db->quoteName('#__ysi_categories'))
+            ->whereIn($db->quoteName('path'), $ancestorPaths, ParameterType::STRING)
+            ->where($db->quoteName('published') . ' = 1')
+            ->whereIn($db->quoteName('access'), $user->getAuthorisedViewLevels())
+            ->order($db->quoteName('level') . ' ASC');
+
+        $db->setQuery($query);
+
+        return $db->loadObjectList() ?: [];
+    }
+
     protected function getListQuery()
     {
         $catId = (int) $this->getState('category.id');

@@ -62,34 +62,13 @@ class HtmlView extends BaseHtmlView
         );
 
         if ($this->category) {
-            // Build breadcrumb from category path.
-            if (!empty($this->category->path)) {
-                $db       = Factory::getContainer()->get('DatabaseDriver');
-                $user     = $app->getIdentity();
-                $groups   = $user->getAuthorisedViewLevels();
-                $segments = explode('/', $this->category->path);
-                $pathSoFar = '';
+            $ancestors = $this->getModel()->getAncestors();
 
-                foreach ($segments as $segment) {
-                    $pathSoFar .= ($pathSoFar !== '' ? '/' : '') . $segment;
-
-                    $query = $db->getQuery(true)
-                        ->select($db->quoteName(['id', 'title']))
-                        ->from($db->quoteName('#__ysi_categories'))
-                        ->where($db->quoteName('path') . ' = :path')
-                        ->where($db->quoteName('published') . ' = 1')
-                        ->whereIn($db->quoteName('access'), $groups)
-                        ->bind(':path', $pathSoFar);
-                    $db->setQuery($query);
-                    $ancestor = $db->loadObject();
-
-                    if ($ancestor && (int) $ancestor->id !== (int) $this->category->id) {
-                        $pathway->addItem(
-                            $ancestor->title,
-                            'index.php?option=com_ysinventory&view=category&id=' . $ancestor->id
-                        );
-                    }
-                }
+            foreach ($ancestors as $ancestor) {
+                $pathway->addItem(
+                    $ancestor->title,
+                    'index.php?option=com_ysinventory&view=category&id=' . (int) $ancestor->id
+                );
             }
 
             $pathway->addItem($this->category->title);

@@ -65,7 +65,7 @@ class ItemModel extends BaseDatabaseModel
         $query->bind(':itemId', $itemId, ParameterType::INTEGER);
 
         // Access filter.
-        $user = Factory::getApplication()->getIdentity();
+        $user = $app->getIdentity();
         $query->whereIn($db->quoteName('a.access'), $user->getAuthorisedViewLevels());
 
         // Join inventory name (only published).

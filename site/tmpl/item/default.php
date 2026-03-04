@@ -16,16 +16,15 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use YakShaver\Component\Ysinventory\Administrator\Helper\StatusHelper;
 
 /** @var \YakShaver\Component\Ysinventory\Site\View\Item\HtmlView $this */
 
-require_once JPATH_COMPONENT . '/tmpl/lend_status_helper.php';
-
 $item = $this->item;
 
-$statusLabels = ysinventoryGetLendStatusLabels();
+$statusLabels = StatusHelper::getLendStatusLabels();
 
-$assetStatusMapping = ysinventoryGetAssetStatusMapping();
+$assetStatusMapping = StatusHelper::getAssetStatusMapping();
 $assetStatus = $assetStatusMapping[$item->ysi_status ?? ''] ?? $assetStatusMapping[''];
 $activeTab = $this->activeTab ?? 'details';
 $itemId = Factory::getApplication()->getInput()->getInt('Itemid');

@@ -17,12 +17,12 @@ namespace YakShaver\Component\Ysinventory\Site\Controller;
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use YakShaver\Component\Ysinventory\Administrator\Helper\ModeratorHelper;
 
 class LendController extends FormController
 {
@@ -42,7 +42,7 @@ class LendController extends FormController
      */
     protected function allowAdd($data = [])
     {
-        return $this->isModerator();
+        return ModeratorHelper::isModerator(Factory::getApplication()->getIdentity());
     }
 
     /**
@@ -55,7 +55,7 @@ class LendController extends FormController
      */
     protected function allowEdit($data = [], $key = 'id')
     {
-        return $this->isModerator();
+        return ModeratorHelper::isModerator(Factory::getApplication()->getIdentity());
     }
 
     /**
@@ -111,34 +111,4 @@ class LendController extends FormController
         return true;
     }
 
-    /**
-     * Check whether the current user belongs to a configured moderation group.
-     *
-     * @return  bool
-     */
-    private function isModerator()
-    {
-        $user = Factory::getApplication()->getIdentity();
-
-        if ($user->guest) {
-            return false;
-        }
-
-        if ($user->authorise('core.edit', 'com_ysinventory')) {
-            return true;
-        }
-
-        $moderationGroups = (array) ComponentHelper::getParams('com_ysinventory')
-            ->get('ysi_lend_moderation_groups', []);
-
-        if (!empty($moderationGroups)) {
-            $userGroups = $user->getAuthorisedGroups();
-
-            if (!empty(array_intersect($userGroups, $moderationGroups))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

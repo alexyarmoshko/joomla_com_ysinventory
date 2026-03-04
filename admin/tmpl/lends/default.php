@@ -16,10 +16,9 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use YakShaver\Component\Ysinventory\Administrator\Helper\StatusHelper;
 
 /** @var \YakShaver\Component\Ysinventory\Administrator\View\Lends\HtmlView $this */
-
-require_once JPATH_SITE . '/components/com_ysinventory/tmpl/lend_status_helper.php';
 
 /** @var \Joomla\CMS\WebAsset\WebAssetManager $wa */
 $wa = $this->getDocument()->getWebAssetManager();
@@ -30,7 +29,7 @@ $user = $this->getCurrentUser();
 $listOrder = $this->escape($this->state->get('list.ordering'));
 $listDirn = $this->escape($this->state->get('list.direction'));
 
-$statusLabels = ysinventoryGetLendStatusLabels();
+$statusLabels = StatusHelper::getLendStatusLabels();
 ?>
 <form action="<?php echo Route::_('index.php?option=com_ysinventory&view=lends'); ?>" method="post" name="adminForm"
     id="adminForm">
