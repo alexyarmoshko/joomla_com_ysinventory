@@ -12,10 +12,14 @@
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
 /** @var \YakShaver\Component\Ysinventory\Site\View\Brand\HtmlView $this */
+
+$itemId = Factory::getApplication()->getInput()->getInt('Itemid');
+$itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
 ?>
 <div class="com-ysinventory-brand">
     <h2>
@@ -48,7 +52,7 @@ use Joomla\CMS\Router\Route;
             <ul class="list-group">
                 <?php foreach ($this->items as $item): ?>
                     <li class="list-group-item">
-                        <a href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) $item->id); ?>">
+                        <a href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) $item->id . $itemIdParam); ?>">
                             <?php echo $this->escape($item->name); ?>
                         </a>
                     </li>

@@ -8,6 +8,7 @@ A Joomla 5.4 component for inventory management and lending.
 - Inventory owner selection supports exactly one of Joomla user or Joomla contact (XOR)
 - Item catalog with filtering, search, and pagination
 - Lending workflow with request/moderation and stock enforcement
+- Loan History uses Joomla standard list pagination controls ("Per page" + page links)
 - Configurable permissions via Joomla user groups
 
 ## Requirements

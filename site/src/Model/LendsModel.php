@@ -52,6 +52,7 @@ class LendsModel extends ListModel
 
         $this->setState('filter.search', $app->getInput()->getString('search', ''));
         $this->setState('filter.ysi_status', $app->getInput()->getString('ysi_status', ''));
+        $this->setState('filter.ysi_item_id', $app->getInput()->getString('ysi_item_id', ''));
 
         parent::populateState($ordering, $direction);
     }
@@ -60,6 +61,7 @@ class LendsModel extends ListModel
     {
         $id .= ':' . $this->getState('filter.search');
         $id .= ':' . $this->getState('filter.ysi_status');
+        $id .= ':' . $this->getState('filter.ysi_item_id');
 
         return parent::getStoreId($id);
     }
@@ -108,6 +110,15 @@ class LendsModel extends ListModel
             $query->bind(':currentUserId', $userId, ParameterType::INTEGER);
         }
 
+        // Filter by item (asset).
+        $itemId = $this->getState('filter.ysi_item_id');
+
+        if (is_numeric($itemId)) {
+            $itemId = (int) $itemId;
+            $query->where($db->quoteName('a.ysi_item_id') . ' = :filterItemId');
+            $query->bind(':filterItemId', $itemId, ParameterType::INTEGER);
+        }
+
         // Filter by status.
         $status = $this->getState('filter.ysi_status');
 
@@ -133,6 +144,28 @@ class LendsModel extends ListModel
         $query->order($db->escape($orderCol . ' ' . $orderDirn));
 
         return $query;
+    }
+
+    /**
+     * Get distinct assets that have loan records, for the filter dropdown.
+     *
+     * @return  array  Array of objects with ->value and ->text properties.
+     */
+    public function getAssetFilterOptions(): array
+    {
+        $db = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select('DISTINCT ' . $db->quoteName('it.id', 'value'))
+            ->select($db->quoteName('it.name', 'text'))
+            ->from($db->quoteName('#__ysi_lends', 'l'))
+            ->join(
+                'INNER',
+                $db->quoteName('#__ysi_items', 'it') . ' ON ' . $db->quoteName('it.id') . ' = ' . $db->quoteName('l.ysi_item_id')
+            )
+            ->order($db->quoteName('it.name') . ' ASC');
+        $db->setQuery($query);
+
+        return $db->loadObjectList() ?: [];
     }
 
     /**

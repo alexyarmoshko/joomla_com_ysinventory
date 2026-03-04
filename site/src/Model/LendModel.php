@@ -28,6 +28,11 @@ class LendModel extends AdminModel
 
     public function getForm($data = [], $loadData = true)
     {
+        // Support both site and administrator form locations so frontend lend edit
+        // continues to work even if a package missed site/forms during deployment.
+        $this->addFormPath(JPATH_COMPONENT . '/forms');
+        $this->addFormPath(JPATH_COMPONENT_ADMINISTRATOR . '/forms');
+
         $form = $this->loadForm(
             'com_ysinventory.' . $this->formName,
             $this->formName,

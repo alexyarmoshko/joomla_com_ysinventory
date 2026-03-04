@@ -28,6 +28,7 @@
     </update>
 
     <files folder="site">
+        <folder>forms</folder>
         <folder>src</folder>
         <folder>tmpl</folder>
     </files>

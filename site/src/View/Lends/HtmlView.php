@@ -26,6 +26,7 @@ class HtmlView extends BaseHtmlView
     protected $pagination;
     protected $state;
     public $isModerator = false;
+    public $assetFilterOptions = [];
 
     public function display($tpl = null)
     {
@@ -46,6 +47,7 @@ class HtmlView extends BaseHtmlView
         $this->pagination = $model->getPagination();
         $this->state = $model->getState();
         $this->isModerator = $model->isModerator($user);
+        $this->assetFilterOptions = $model->getAssetFilterOptions();
 
         if (\count($errors = $model->getErrors())) {
             throw new GenericDataException(implode("\n", $errors), 500);

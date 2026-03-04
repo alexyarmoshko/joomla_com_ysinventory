@@ -177,13 +177,39 @@ class ItemModel extends BaseDatabaseModel
     }
 
     /**
-     * Load borrowing records for a given item ID.
+     * Count borrowing records for a given item ID.
      *
      * @param   int  $itemId  Item ID.
      *
+     * @return  int
+     */
+    public function getItemBorrowingsTotal(int $itemId): int
+    {
+        if ($itemId <= 0) {
+            return 0;
+        }
+
+        $db = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__ysi_lends', 'l'))
+            ->where($db->quoteName('l.ysi_item_id') . ' = :itemId')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER);
+        $db->setQuery($query);
+
+        return (int) $db->loadResult();
+    }
+
+    /**
+     * Load borrowing records for a given item ID.
+     *
+     * @param   int  $itemId      Item ID.
+     * @param   int  $limitstart  Offset.
+     * @param   int  $limit       Items per page (0 = all).
+     *
      * @return  array
      */
-    public function getItemBorrowings(int $itemId): array
+    public function getItemBorrowings(int $itemId, int $limitstart = 0, int $limit = 0): array
     {
         if ($itemId <= 0) {
             return [];
@@ -197,7 +223,6 @@ class ItemModel extends BaseDatabaseModel
                 $db->quoteName('l.ysi_from'),
                 $db->quoteName('l.ysi_to'),
                 $db->quoteName('l.ysi_status'),
-                $db->quoteName('l.ysi_note'),
                 $db->quoteName('l.created'),
             ])
             ->from($db->quoteName('#__ysi_lends', 'l'))
@@ -207,8 +232,13 @@ class ItemModel extends BaseDatabaseModel
             )
             ->where($db->quoteName('l.ysi_item_id') . ' = :itemId')
             ->bind(':itemId', $itemId, ParameterType::INTEGER)
-            ->order($db->quoteName('l.ysi_from') . ' DESC');
-        $db->setQuery($query);
+            ->order($db->quoteName('l.created') . ' DESC');
+
+        if ($limit > 0) {
+            $db->setQuery($query, $limitstart, $limit);
+        } else {
+            $db->setQuery($query);
+        }
 
         return $db->loadObjectList() ?: [];
     }

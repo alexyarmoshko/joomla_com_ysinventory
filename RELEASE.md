@@ -69,6 +69,8 @@
 - Site-side lend request controller with CSRF, login, group, item, date, and stock validation
 - Frontend item detail page shows available stock and conditional lend request form for authorized users
 - Stock guard prevents approving borrows when all units are lent out
+- Borrowings (Loan History) tab now uses Joomla standard server-side pagination (`getListFooter`) with consistent "Per page" control
+- Fixed frontend loan edit form loading by packaging `site/forms` and adding form-path fallback in site `LendModel`
 
 ### Cross-phase — Frontend menu integration
 

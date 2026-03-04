@@ -39,6 +39,9 @@ class DisplayController extends BaseController
         $urlparams['start'] = 'INT';
         $urlparams['limitstart'] = 'INT';
         $urlparams['limit'] = 'INT';
+        $urlparams['borrowings_limitstart'] = 'INT';
+        $urlparams['borrowings_limit'] = 'INT';
+        $urlparams['active_tab'] = 'CMD';
         $urlparams['ysi_status'] = 'INT';
 
         return parent::display($cachable, $urlparams);

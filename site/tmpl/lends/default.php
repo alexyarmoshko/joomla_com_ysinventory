@@ -12,6 +12,7 @@
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
@@ -21,6 +22,8 @@ use Joomla\CMS\Session\Session;
 
 $state = $this->state;
 $isModerator = $this->isModerator;
+$itemId = Factory::getApplication()->getInput()->getInt('Itemid');
+$itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
 
 $statusLabels = [
     1 => ['COM_YSINVENTORY_LEND_STATUS_REQUESTED', 'warning'],
@@ -39,7 +42,7 @@ $statusLabels = [
     <?php if ($isModerator): ?>
         <div class="mb-3">
             <a href="<?php echo Route::_('index.php?option=com_ysinventory&task=lend.add'); ?>" class="btn btn-success">
-                <?php echo Text::_('COM_YSINVENTORY_LEND_ADD'); ?>
+                <?php echo Text::_('COM_YSINVENTORY_LEND_NEW'); ?>
             </a>
         </div>
     <?php endif; ?>
@@ -54,6 +57,21 @@ $statusLabels = [
                 <input type="text" name="search" id="filter_search" class="form-control"
                     value="<?php echo $this->escape($state->get('filter.search', '')); ?>"
                     placeholder="<?php echo Text::_('COM_YSINVENTORY_FILTER_SEARCH_LENDS_HINT'); ?>">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="filter_ysi_item_id">
+                    <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_ITEM_LABEL'); ?>
+                </label>
+                <select name="ysi_item_id" id="filter_ysi_item_id" class="form-select">
+                    <option value="">
+                        <?php echo Text::_('COM_YSINVENTORY_ALL_ASSETS'); ?>
+                    </option>
+                    <?php foreach ($this->assetFilterOptions as $assetOption): ?>
+                        <option value="<?php echo (int) $assetOption->value; ?>" <?php echo ((string) $state->get('filter.ysi_item_id') === (string) $assetOption->value) ? ' selected' : ''; ?>>
+                            <?php echo $this->escape($assetOption->text); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label" for="filter_ysi_status">
@@ -96,19 +114,19 @@ $statusLabels = [
                 <thead>
                     <tr>
                         <th>
-                            <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_STATUS_LABEL'); ?>
-                        </th>
-                        <th>
                             <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_ITEM_LABEL'); ?>
                         </th>
-                        <th class="d-none d-md-table-cell">
-                            <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_USER_LABEL'); ?>
+                        <th>
+                            <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_STATUS_LABEL'); ?>
                         </th>
                         <th class="d-none d-md-table-cell">
                             <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_FROM_LABEL'); ?>
                         </th>
                         <th class="d-none d-md-table-cell">
                             <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_TO_LABEL'); ?>
+                        </th>
+                        <th class="d-none d-md-table-cell">
+                            <?php echo Text::_('COM_YSINVENTORY_FIELD_LEND_USER_LABEL'); ?>
                         </th>
                         <th class="d-none d-md-table-cell">
                             <?php echo Text::_('JGLOBAL_FIELD_CREATED_LABEL'); ?>
@@ -121,28 +139,33 @@ $statusLabels = [
                         ?>
                         <tr>
                             <td>
-                                <span class="badge bg-<?php echo $statusInfo[1]; ?>">
-                                    <?php echo Text::_($statusInfo[0]); ?>
-                                </span>
+                                <a
+                                    href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) ($item->ysi_item_id ?? 0) . $itemIdParam); ?>">
+                                    <?php echo $this->escape($item->item_name ?? ''); ?>
+                                </a>
                             </td>
                             <td>
                                 <?php if ($isModerator): ?>
-                                    <a
-                                        href="<?php echo Route::_('index.php?option=com_ysinventory&task=lend.edit&id=' . (int) $item->id); ?>">
-                                        <?php echo $this->escape($item->item_name ?? ''); ?>
+                                    <a href="<?php echo Route::_('index.php?option=com_ysinventory&task=lend.edit&id=' . (int) $item->id . $itemIdParam); ?>"
+                                        class="text-decoration-none">
+                                        <span class="badge bg-<?php echo $statusInfo[1]; ?>">
+                                            <?php echo Text::_($statusInfo[0]); ?>
+                                        </span>
                                     </a>
                                 <?php else: ?>
-                                    <?php echo $this->escape($item->item_name ?? ''); ?>
+                                    <span class="badge bg-<?php echo $statusInfo[1]; ?>">
+                                        <?php echo Text::_($statusInfo[0]); ?>
+                                    </span>
                                 <?php endif; ?>
-                            </td>
-                            <td class="d-none d-md-table-cell">
-                                <?php echo $this->escape($item->user_name ?? ''); ?>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <?php echo HTMLHelper::_('date', $item->ysi_from, Text::_('DATE_FORMAT_LC4')); ?>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <?php echo HTMLHelper::_('date', $item->ysi_to, Text::_('DATE_FORMAT_LC4')); ?>
+                            </td>
+                            <td class="d-none d-md-table-cell">
+                                <?php echo $this->escape($item->user_name ?? ''); ?>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 <?php echo HTMLHelper::_('date', $item->created, Text::_('DATE_FORMAT_LC4')); ?>

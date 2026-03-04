@@ -12,6 +12,7 @@
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
@@ -19,6 +20,8 @@ use Joomla\CMS\Router\Route;
 
 $filterOptions = $this->filterOptions;
 $state = $this->state;
+$itemId = Factory::getApplication()->getInput()->getInt('Itemid');
+$itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
 ?>
 <div class="com-ysinventory-items">
     <h2>
@@ -160,7 +163,7 @@ $state = $this->state;
                         <tr>
                             <td>
                                 <a
-                                    href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) $item->id); ?>">
+                                    href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) $item->id . $itemIdParam); ?>">
                                     <?php echo $this->escape($item->name); ?>
                                 </a>
                             </td>
