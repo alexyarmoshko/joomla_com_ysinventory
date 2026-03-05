@@ -33,6 +33,8 @@ class StatusHelper
             4 => ['COM_YSINVENTORY_LEND_STATUS_LOST', 'danger'],
             5 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED', 'warning'],
             6 => ['COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE', 'danger'],
+            7 => ['COM_YSINVENTORY_LEND_STATUS_CANCELLED', 'secondary'],
+            8 => ['COM_YSINVENTORY_LEND_STATUS_DENIED', 'dark'],
         ];
     }
 

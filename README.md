@@ -39,7 +39,8 @@ The UI uses the following business terms consistently:
 ### Loan Workflow
 
 - Loan request submission from asset detail page
-- Status lifecycle: Requested, On Loan, Returned, Lost, Returned Damaged, Returned Overdue
+- Status lifecycle: Requested, On Loan, Returned, Lost, Returned Damaged, Returned Overdue, Cancelled, Denied
+- Allowed transitions: Requested -> On Loan|Cancelled|Denied; On Loan -> Returned|Lost|Returned Damaged|Returned Overdue
 - Category-level configuration with fallback to global component settings
 - Transactional stock guard on loan approval (`On Loan` transition)
 - Append-only loan journal table (`#__ysi_lends_log`) for update/delete snapshots

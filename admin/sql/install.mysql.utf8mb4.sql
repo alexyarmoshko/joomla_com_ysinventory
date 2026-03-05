@@ -231,7 +231,7 @@ CREATE TABLE IF NOT EXISTS `#__ysi_lends` (
   `ysi_from` date NOT NULL,
   `ysi_to` date NOT NULL,
   `ysi_note` text,
-  `ysi_status` tinyint NOT NULL DEFAULT 1 COMMENT '1=Requested, 2=On Loan, 3=Returned, 4=Lost, 5=Returned Damaged, 6=Returned Overdue',
+  `ysi_status` tinyint NOT NULL DEFAULT 1 COMMENT '1=Requested, 2=On Loan, 3=Returned, 4=Lost, 5=Returned Damaged, 6=Returned Overdue, 7=Cancelled, 8=Denied',
   `created` datetime NOT NULL,
   `created_by` int unsigned NOT NULL DEFAULT 0,
   `modified` datetime NOT NULL,

@@ -22,7 +22,8 @@ Initial release.
 ### Lending workflow
 
 - Loan records with item reference, loanee, date range, note, and status tracking
-- Status lifecycle: Requested, On Loan, Returned, Lost, Returned Damaged, Returned Overdue
+- Status lifecycle: Requested, On Loan, Returned, Lost, Returned Damaged, Returned Overdue, Cancelled, Denied
+- Allowed transitions: Requested -> On Loan|Cancelled|Denied; On Loan -> Returned|Lost|Returned Damaged|Returned Overdue
 - Configurable request and moderation groups (global and per-category)
 - Transactional stock guard on loan approval
 - Admin and frontend loan management with status badges

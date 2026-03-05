@@ -23,6 +23,8 @@
             <option value="4">COM_YSINVENTORY_LEND_STATUS_LOST</option>
             <option value="5">COM_YSINVENTORY_LEND_STATUS_RETURNED_DAMAGED</option>
             <option value="6">COM_YSINVENTORY_LEND_STATUS_RETURNED_OVERDUE</option>
+            <option value="7">COM_YSINVENTORY_LEND_STATUS_CANCELLED</option>
+            <option value="8">COM_YSINVENTORY_LEND_STATUS_DENIED</option>
         </field>
 
         <field
