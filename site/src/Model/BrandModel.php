@@ -102,6 +102,13 @@ class BrandModel extends ListModel
             'i.ordering',
         ]));
         $query->from($db->quoteName('#__ysi_items', 'i'));
+        $query->join(
+            'INNER',
+            $db->quoteName('#__ysi_categories', 'c')
+            . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('i.catid')
+            . ' AND ' . $db->quoteName('c.published') . ' = 1'
+            . ' AND ' . $db->quoteName('c.level') . ' > 0'
+        );
         $query->where($db->quoteName('i.brand_id') . ' = :brandId');
         $query->where($db->quoteName('i.published') . ' = 1');
         $query->bind(':brandId', $brandId, ParameterType::INTEGER);
@@ -109,6 +116,7 @@ class BrandModel extends ListModel
         // Access filter on items.
         $user = Factory::getApplication()->getIdentity();
         $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
+        $query->whereIn($db->quoteName('c.access'), $user->getAuthorisedViewLevels());
 
         $orderCol = $this->state->get('list.ordering', 'i.ordering');
         $orderDirn = $this->state->get('list.direction', 'asc');

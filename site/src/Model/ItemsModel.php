@@ -64,6 +64,8 @@ class ItemsModel extends ListModel
     {
         $db = $this->getDatabase();
         $query = $db->getQuery(true);
+        $user = Factory::getApplication()->getIdentity();
+        $viewLevels = $user->getAuthorisedViewLevels();
 
         $query->select(
             $db->quoteName([
@@ -91,8 +93,17 @@ class ItemsModel extends ListModel
         $query->where($db->quoteName('a.published') . ' = 1');
 
         // Access filter.
-        $user = Factory::getApplication()->getIdentity();
-        $query->whereIn($db->quoteName('a.access'), $user->getAuthorisedViewLevels());
+        $query->whereIn($db->quoteName('a.access'), $viewLevels);
+
+        // Item visibility inherits category visibility on the site.
+        $query->join(
+            'INNER',
+            $db->quoteName('#__ysi_categories', 'cat')
+            . ' ON ' . $db->quoteName('cat.id') . ' = ' . $db->quoteName('a.catid')
+            . ' AND ' . $db->quoteName('cat.published') . ' = 1'
+            . ' AND ' . $db->quoteName('cat.level') . ' > 0'
+        );
+        $query->whereIn($db->quoteName('cat.access'), $viewLevels);
 
         // Join inventory name.
         $query->select($db->quoteName('inv.name', 'inventory_name'))
@@ -102,11 +113,7 @@ class ItemsModel extends ListModel
             );
 
         // Join category title.
-        $query->select($db->quoteName('cat.title', 'category_title'))
-            ->join(
-                'LEFT',
-                $db->quoteName('#__ysi_categories', 'cat') . ' ON ' . $db->quoteName('cat.id') . ' = ' . $db->quoteName('a.catid')
-            );
+        $query->select($db->quoteName('cat.title', 'category_title'));
 
         // Join brand name.
         $query->select($db->quoteName('br.name', 'brand_name'))
@@ -201,6 +208,7 @@ class ItemsModel extends ListModel
             ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.catid') . ' = ' . $db->quoteName('c.id'))
             ->where($db->quoteName('c.published') . ' = 1')
             ->where($db->quoteName('c.level') . ' > 0')
+            ->whereIn($db->quoteName('c.access'), $viewLevels)
             ->where($db->quoteName('i.published') . ' = 1')
             ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order($db->quoteName('c.lft'));
@@ -212,7 +220,11 @@ class ItemsModel extends ListModel
             ->select('DISTINCT ' . $db->quoteName('inv.id') . ', ' . $db->quoteName('inv.name'))
             ->from($db->quoteName('#__ysi_inventories', 'inv'))
             ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.ysi_inventory_id') . ' = ' . $db->quoteName('inv.id'))
+            ->join('INNER', $db->quoteName('#__ysi_categories', 'c') . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('i.catid'))
             ->where($db->quoteName('inv.published') . ' = 1')
+            ->where($db->quoteName('c.published') . ' = 1')
+            ->where($db->quoteName('c.level') . ' > 0')
+            ->whereIn($db->quoteName('c.access'), $viewLevels)
             ->where($db->quoteName('i.published') . ' = 1')
             ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order($db->quoteName('inv.name'));
@@ -224,7 +236,11 @@ class ItemsModel extends ListModel
             ->select('DISTINCT ' . $db->quoteName('br.id') . ', ' . $db->quoteName('br.name'))
             ->from($db->quoteName('#__ysi_brands', 'br'))
             ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.brand_id') . ' = ' . $db->quoteName('br.id'))
+            ->join('INNER', $db->quoteName('#__ysi_categories', 'c') . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('i.catid'))
             ->where($db->quoteName('br.published') . ' = 1')
+            ->where($db->quoteName('c.published') . ' = 1')
+            ->where($db->quoteName('c.level') . ' > 0')
+            ->whereIn($db->quoteName('c.access'), $viewLevels)
             ->where($db->quoteName('i.published') . ' = 1')
             ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order($db->quoteName('br.name'));
@@ -241,8 +257,12 @@ class ItemsModel extends ListModel
             ->join('INNER', $db->quoteName('#__ysi_tag_groups', 'tg') . ' ON ' . $db->quoteName('tg.id') . ' = ' . $db->quoteName('t.ysi_tag_group_id'))
             ->join('INNER', $db->quoteName('#__ysi_item_tag_map', 'itm') . ' ON ' . $db->quoteName('itm.ysi_tag_id') . ' = ' . $db->quoteName('t.id'))
             ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.id') . ' = ' . $db->quoteName('itm.ysi_item_id'))
+            ->join('INNER', $db->quoteName('#__ysi_categories', 'c') . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('i.catid'))
             ->where($db->quoteName('t.published') . ' = 1')
             ->where($db->quoteName('tg.published') . ' = 1')
+            ->where($db->quoteName('c.published') . ' = 1')
+            ->where($db->quoteName('c.level') . ' > 0')
+            ->whereIn($db->quoteName('c.access'), $viewLevels)
             ->where($db->quoteName('i.published') . ' = 1')
             ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order([$db->quoteName('tg.ordering'), $db->quoteName('tg.name'), $db->quoteName('t.ordering'), $db->quoteName('t.name')]);
@@ -254,6 +274,10 @@ class ItemsModel extends ListModel
             ->select('DISTINCT ' . $db->quoteName('u.id') . ', ' . $db->quoteName('u.name'))
             ->from($db->quoteName('#__users', 'u'))
             ->join('INNER', $db->quoteName('#__ysi_items', 'i') . ' ON ' . $db->quoteName('i.ysi_location_user_id') . ' = ' . $db->quoteName('u.id'))
+            ->join('INNER', $db->quoteName('#__ysi_categories', 'c') . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('i.catid'))
+            ->where($db->quoteName('c.published') . ' = 1')
+            ->where($db->quoteName('c.level') . ' > 0')
+            ->whereIn($db->quoteName('c.access'), $viewLevels)
             ->where($db->quoteName('i.published') . ' = 1')
             ->whereIn($db->quoteName('i.access'), $viewLevels)
             ->order($db->quoteName('u.name'));

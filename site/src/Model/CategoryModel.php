@@ -116,6 +116,7 @@ class CategoryModel extends ListModel
 
         $db = $this->getDatabase();
         $user = Factory::getApplication()->getIdentity();
+        $groupList = implode(',', array_map('intval', $user->getAuthorisedViewLevels()) ?: [0]);
         $query = $db->getQuery(true)
             ->select($db->quoteName(['a.id', 'a.title', 'a.alias', 'a.description', 'a.path', 'a.level']))
             ->from($db->quoteName('#__ysi_categories', 'a'))
@@ -131,7 +132,7 @@ class CategoryModel extends ListModel
             ->from($db->quoteName('#__ysi_items', 'i'))
             ->where($db->quoteName('i.catid') . ' = ' . $db->quoteName('a.id'))
             ->where($db->quoteName('i.published') . ' = 1')
-            ->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
+            ->where($db->quoteName('i.access') . ' IN (' . $groupList . ')');
 
         $query->select('(' . $subQuery . ') AS ' . $db->quoteName('item_count'));
 

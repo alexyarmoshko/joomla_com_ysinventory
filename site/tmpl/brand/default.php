@@ -52,7 +52,7 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
             <ul class="list-group">
                 <?php foreach ($this->items as $item): ?>
                     <li class="list-group-item">
-                        <a href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) $item->id . $itemIdParam); ?>">
+                        <a href="<?php echo Route::_('index.php?option=com_ysinventory&view=item&id=' . (int) $item->id . '&source_view=brand&source_id=' . (int) $this->brand->id . $itemIdParam); ?>">
                             <?php echo $this->escape($item->name); ?>
                         </a>
                     </li>

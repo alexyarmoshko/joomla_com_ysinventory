@@ -20,6 +20,12 @@ use Joomla\Database\ParameterType;
 
 class CategoriesModel extends ListModel
 {
+    protected function shouldShowEmpty(): bool
+    {
+        $app = Factory::getApplication();
+        return (int) $app->getParams()->get('show_empty', 1) === 1;
+    }
+
     public function __construct($config = [])
     {
         if (empty($config['filter_fields'])) {
@@ -44,6 +50,7 @@ class CategoriesModel extends ListModel
     protected function getStoreId($id = '')
     {
         $id .= ':' . $this->getState('filter.parent_id');
+        $id .= ':' . (int) $this->shouldShowEmpty();
 
         return parent::getStoreId($id);
     }
@@ -85,9 +92,10 @@ class CategoriesModel extends ListModel
         $groups = $user->getAuthorisedViewLevels();
         $query->whereIn($db->quoteName('a.access'), $groups);
 
-        // Item count subquery (placeholder — #__ysi_items will exist from Phase 6).
+        // Item count subquery (placeholder - #__ysi_items will exist from Phase 6).
         try {
             $itemColumns = $db->getTableColumns('#__ysi_items', false);
+            $groupList = implode(',', array_map('intval', $groups) ?: [0]);
 
             if (isset($itemColumns['catid'])) {
                 $subQuery = $db->getQuery(true)
@@ -98,10 +106,15 @@ class CategoriesModel extends ListModel
 
                 // Filter item counts by access level when the column exists.
                 if (isset($itemColumns['access'])) {
-                    $subQuery->whereIn($db->quoteName('i.access'), $groups);
+                    $subQuery->where($db->quoteName('i.access') . ' IN (' . $groupList . ')');
                 }
 
-                $query->select('(' . $subQuery . ') AS ' . $db->quoteName('item_count'));
+                $itemCountSql = '(' . $subQuery . ')';
+                $query->select($itemCountSql . ' AS ' . $db->quoteName('item_count'));
+
+                if (!$this->shouldShowEmpty()) {
+                    $query->where($itemCountSql . ' > 0');
+                }
             } else {
                 $query->select('0 AS ' . $db->quoteName('item_count'));
             }

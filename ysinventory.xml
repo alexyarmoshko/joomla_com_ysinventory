@@ -10,6 +10,7 @@
     <version>1.0.0</version>
     <description>COM_YSINVENTORY_XML_DESCRIPTION</description>
     <namespace path="src">YakShaver\Component\Ysinventory</namespace>
+    <scriptfile>script.php</scriptfile>
 
     <install>
         <sql>
@@ -61,6 +62,7 @@
         <files folder="admin">
             <filename>access.xml</filename>
             <filename>config.xml</filename>
+            <filename>script.php</filename>
             <folder>forms</folder>
             <folder>language</folder>
             <folder>services</folder>

@@ -31,7 +31,7 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
     <form action="<?php echo Route::_('index.php?option=com_ysinventory&view=items'); ?>" method="get" name="adminForm"
         id="adminForm" class="com-ysinventory-items__filter mb-4">
         <div class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="form-label" for="filter_search">
                     <?php echo Text::_('COM_YSINVENTORY_FILTER_SEARCH_ITEMS'); ?>
                 </label>
@@ -39,37 +39,7 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
                     value="<?php echo $this->escape($state->get('filter.search', '')); ?>"
                     placeholder="<?php echo Text::_('COM_YSINVENTORY_FILTER_SEARCH_ITEMS_HINT'); ?>">
             </div>
-            <div class="col-md-2">
-                <label class="form-label" for="filter_catid">
-                    <?php echo Text::_('COM_YSINVENTORY_FIELD_CATEGORY_LABEL'); ?>
-                </label>
-                <select name="catid" id="filter_catid" class="form-select">
-                    <option value="">
-                        <?php echo Text::_('COM_YSINVENTORY_ALL_CATEGORIES'); ?>
-                    </option>
-                    <?php foreach ($filterOptions['categories'] as $cat): ?>
-                        <option value="<?php echo (int) $cat->id; ?>" <?php echo ((int) $state->get('filter.category') === (int) $cat->id) ? ' selected' : ''; ?>>
-                            <?php echo $this->escape($cat->title); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="filter_inventory">
-                    <?php echo Text::_('COM_YSINVENTORY_FIELD_INVENTORY_LABEL'); ?>
-                </label>
-                <select name="inventory" id="filter_inventory" class="form-select">
-                    <option value="">
-                        <?php echo Text::_('COM_YSINVENTORY_ALL_INVENTORIES'); ?>
-                    </option>
-                    <?php foreach ($filterOptions['inventories'] as $inv): ?>
-                        <option value="<?php echo (int) $inv->id; ?>" <?php echo ((int) $state->get('filter.inventory') === (int) $inv->id) ? ' selected' : ''; ?>>
-                            <?php echo $this->escape($inv->name); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-2">
+            <div class="col-md-4">
                 <label class="form-label" for="filter_brand">
                     <?php echo Text::_('COM_YSINVENTORY_FIELD_BRAND_LABEL'); ?>
                 </label>
@@ -84,7 +54,7 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <label class="form-label" for="filter_tag">
                     <?php echo Text::_('COM_YSINVENTORY_FIELD_TAG_LABEL'); ?>
                 </label>
@@ -101,7 +71,37 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
             </div>
         </div>
         <div class="row g-2 mt-2 align-items-end">
-            <div class="col-md-2">
+            <div class="col-md-4">
+                <label class="form-label" for="filter_catid">
+                    <?php echo Text::_('COM_YSINVENTORY_FIELD_CATEGORY_LABEL'); ?>
+                </label>
+                <select name="catid" id="filter_catid" class="form-select">
+                    <option value="">
+                        <?php echo Text::_('COM_YSINVENTORY_ALL_CATEGORIES'); ?>
+                    </option>
+                    <?php foreach ($filterOptions['categories'] as $cat): ?>
+                        <option value="<?php echo (int) $cat->id; ?>" <?php echo ((int) $state->get('filter.category') === (int) $cat->id) ? ' selected' : ''; ?>>
+                            <?php echo $this->escape($cat->title); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="filter_inventory">
+                    <?php echo Text::_('COM_YSINVENTORY_FIELD_INVENTORY_LABEL'); ?>
+                </label>
+                <select name="inventory" id="filter_inventory" class="form-select">
+                    <option value="">
+                        <?php echo Text::_('COM_YSINVENTORY_ALL_INVENTORIES'); ?>
+                    </option>
+                    <?php foreach ($filterOptions['inventories'] as $inv): ?>
+                        <option value="<?php echo (int) $inv->id; ?>" <?php echo ((int) $state->get('filter.inventory') === (int) $inv->id) ? ' selected' : ''; ?>>
+                            <?php echo $this->escape($inv->name); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label class="form-label" for="filter_location">
                     <?php echo Text::_('COM_YSINVENTORY_FIELD_LOCATION_LABEL'); ?>
                 </label>
@@ -117,8 +117,9 @@ $itemIdParam = $itemId > 0 ? '&Itemid=' . $itemId : '';
                 </select>
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary">
-                    <?php echo Text::_('JSEARCH_FILTER_SUBMIT'); ?>
+                <button type="submit" class="btn btn-primary" aria-label="<?php echo Text::_('JSEARCH_FILTER_SUBMIT'); ?>">
+                    <span class="fa fa-search" aria-hidden="true"></span>
+                    <span class="visually-hidden"><?php echo Text::_('JSEARCH_FILTER_SUBMIT'); ?></span>
                 </button>
             </div>
             <div class="col-auto">

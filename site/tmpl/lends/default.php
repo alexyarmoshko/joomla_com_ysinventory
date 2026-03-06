@@ -83,8 +83,9 @@ $statusLabels = StatusHelper::getLendStatusLabels();
                 </select>
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary">
-                    <?php echo Text::_('JSEARCH_FILTER_SUBMIT'); ?>
+                <button type="submit" class="btn btn-primary" aria-label="<?php echo Text::_('JSEARCH_FILTER_SUBMIT'); ?>">
+                    <span class="fa fa-search" aria-hidden="true"></span>
+                    <span class="visually-hidden"><?php echo Text::_('JSEARCH_FILTER_SUBMIT'); ?></span>
                 </button>
             </div>
             <div class="col-auto">

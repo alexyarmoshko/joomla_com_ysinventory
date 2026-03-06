@@ -73,6 +73,8 @@ class HtmlView extends BaseHtmlView
 
     protected function prepareDocument()
     {
-        $this->getDocument()->setTitle(Text::_('COM_YSINVENTORY_LENDS'));
+        $document = $this->getDocument();
+        $document->setTitle(Text::_('COM_YSINVENTORY_LENDS'));
+        $document->getWebAssetManager()->useStyle('fontawesome');
     }
 }

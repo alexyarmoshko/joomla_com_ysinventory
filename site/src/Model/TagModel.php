@@ -115,6 +115,13 @@ class TagModel extends ListModel
             $db->quoteName('#__ysi_items', 'i')
             . ' ON ' . $db->quoteName('i.id') . ' = ' . $db->quoteName('itm.ysi_item_id')
         );
+        $query->join(
+            'INNER',
+            $db->quoteName('#__ysi_categories', 'c')
+            . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('i.catid')
+            . ' AND ' . $db->quoteName('c.published') . ' = 1'
+            . ' AND ' . $db->quoteName('c.level') . ' > 0'
+        );
         $query->where($db->quoteName('itm.ysi_tag_id') . ' = :tagId');
         $query->where($db->quoteName('i.published') . ' = 1');
         $query->bind(':tagId', $tagId, ParameterType::INTEGER);
@@ -122,6 +129,7 @@ class TagModel extends ListModel
         // Access filter on items.
         $user = Factory::getApplication()->getIdentity();
         $query->whereIn($db->quoteName('i.access'), $user->getAuthorisedViewLevels());
+        $query->whereIn($db->quoteName('c.access'), $user->getAuthorisedViewLevels());
 
         $orderCol = $this->state->get('list.ordering', 'i.ordering');
         $orderDirn = $this->state->get('list.direction', 'asc');

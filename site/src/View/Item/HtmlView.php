@@ -17,6 +17,7 @@ namespace YakShaver\Component\Ysinventory\Site\View\Item;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Menu\AbstractMenu;
 use Joomla\CMS\MVC\View\GenericDataException;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Pagination\Pagination;
@@ -124,16 +125,27 @@ class HtmlView extends BaseHtmlView
         $pathway = $app->getPathway();
         $menu    = $app->getMenu();
         $active  = $menu ? $menu->getActive() : null;
+        $input   = $app->getInput();
 
         $activeOption = $active->query['option'] ?? '';
         $activeView   = $active->query['view'] ?? '';
         $activeId     = isset($active->query['id']) ? (int) $active->query['id'] : 0;
         $currentId    = (int) ($this->item->id ?? 0);
+        $sourceView   = $input->getCmd('source_view', '');
+        $sourceId     = $input->getInt('source_id', 0);
 
         $isItemsMenuContext = $activeOption === 'com_ysinventory' && $activeView === 'items';
         $isCurrentItemMenuContext = $activeOption === 'com_ysinventory'
             && $activeView === 'item'
             && $activeId === $currentId;
+
+        if ($this->addSourceBreadcrumbs($pathway, $sourceView, $sourceId)) {
+            if ($this->item) {
+                $pathway->addItem($this->item->name);
+            }
+
+            return;
+        }
 
         if (!$isItemsMenuContext && !$isCurrentItemMenuContext) {
             $pathway->addItem(
@@ -150,6 +162,116 @@ class HtmlView extends BaseHtmlView
                 $pathway->addItem($this->item->name);
             }
         }
+    }
+
+    protected function addSourceBreadcrumbs($pathway, string $sourceView, int $sourceId): bool
+    {
+        if (!$this->item || $sourceId <= 0) {
+            return false;
+        }
+
+        switch ($sourceView) {
+            case 'category':
+                if ((int) ($this->item->catid ?? 0) !== $sourceId || empty($this->item->category_title)) {
+                    return false;
+                }
+
+                $pathway->addItem(
+                    Text::_('COM_YSINVENTORY_CATEGORIES'),
+                    $this->resolveMenuRoute('categories')
+                );
+                $pathway->addItem(
+                    $this->item->category_title,
+                    $this->resolveMenuRoute('category', $sourceId)
+                );
+
+                return true;
+
+            case 'brand':
+                if ((int) ($this->item->brand_id ?? 0) !== $sourceId || empty($this->item->brand_name)) {
+                    return false;
+                }
+
+                $pathway->addItem(
+                    Text::_('COM_YSINVENTORY_BRANDS'),
+                    $this->resolveMenuRoute('brands')
+                );
+                $pathway->addItem(
+                    $this->item->brand_name,
+                    $this->resolveMenuRoute('brand', $sourceId)
+                );
+
+                return true;
+
+            case 'tag':
+                foreach ($this->item->tags ?? [] as $tag) {
+                    if ((int) ($tag->id ?? 0) !== $sourceId) {
+                        continue;
+                    }
+
+                    $pathway->addItem(
+                        Text::_('COM_YSINVENTORY_TAGS'),
+                        $this->resolveMenuRoute('tags')
+                    );
+                    $pathway->addItem(
+                        $tag->name,
+                        $this->resolveMenuRoute('tag', $sourceId)
+                    );
+
+                    return true;
+                }
+
+                return false;
+        }
+
+        return false;
+    }
+
+    protected function resolveMenuRoute(string $view, int $id = 0): string
+    {
+        $app = Factory::getApplication();
+        $menu = $app->getMenu();
+
+        if ($menu instanceof AbstractMenu) {
+            $active = $menu->getActive();
+
+            if ($this->menuItemMatches($active, $view, $id)) {
+                return 'index.php?Itemid=' . (int) $active->id;
+            }
+
+            foreach ($menu->getMenu() as $menuItem) {
+                if ($this->menuItemMatches($menuItem, $view, $id)) {
+                    return 'index.php?Itemid=' . (int) $menuItem->id;
+                }
+            }
+        }
+
+        $route = 'index.php?option=com_ysinventory&view=' . $view;
+
+        if ($id > 0) {
+            $route .= '&id=' . $id;
+        }
+
+        return $route;
+    }
+
+    protected function menuItemMatches($menuItem, string $view, int $id = 0): bool
+    {
+        if (!$menuItem) {
+            return false;
+        }
+
+        $query = $menuItem->query ?? [];
+
+        if (($query['option'] ?? '') !== 'com_ysinventory' || ($query['view'] ?? '') !== $view) {
+            return false;
+        }
+
+        if ($id > 0) {
+            return (int) ($query['id'] ?? 0) === $id;
+        }
+
+        return true;
     }
 
     protected function prepareDocument()

@@ -9,6 +9,16 @@
 
     <fields name="params">
         <fieldset name="basic" label="JGLOBAL_FIELDSET_BASIC">
+            <field
+                name="show_empty"
+                type="radio"
+                label="COM_YSINVENTORY_FIELD_SHOW_EMPTY_LABEL"
+                description="COM_YSINVENTORY_FIELD_SHOW_EMPTY_DESC"
+                default="1"
+                class="btn-group btn-group-yesno">
+                <option value="1">JYES</option>
+                <option value="0">JNO</option>
+            </field>
         </fieldset>
     </fields>
 </metadata>

@@ -16,6 +16,7 @@ namespace YakShaver\Component\Ysinventory\Site\View\Category;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Menu\AbstractMenu;
 use Joomla\CMS\MVC\View\GenericDataException;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 
@@ -58,7 +59,7 @@ class HtmlView extends BaseHtmlView
 
         $pathway->addItem(
             Text::_('COM_YSINVENTORY_CATEGORIES'),
-            'index.php?option=com_ysinventory&view=categories'
+            $this->resolveMenuRoute('categories')
         );
 
         if ($this->category) {
@@ -67,12 +68,59 @@ class HtmlView extends BaseHtmlView
             foreach ($ancestors as $ancestor) {
                 $pathway->addItem(
                     $ancestor->title,
-                    'index.php?option=com_ysinventory&view=category&id=' . (int) $ancestor->id
+                    $this->resolveMenuRoute('category', (int) $ancestor->id)
                 );
             }
 
             $pathway->addItem($this->category->title);
         }
+    }
+
+    protected function resolveMenuRoute(string $view, int $id = 0): string
+    {
+        $app = Factory::getApplication();
+        $menu = $app->getMenu();
+
+        if ($menu instanceof AbstractMenu) {
+            $active = $menu->getActive();
+
+            if ($this->menuItemMatches($active, $view, $id)) {
+                return 'index.php?Itemid=' . (int) $active->id;
+            }
+
+            foreach ($menu->getMenu() as $menuItem) {
+                if ($this->menuItemMatches($menuItem, $view, $id)) {
+                    return 'index.php?Itemid=' . (int) $menuItem->id;
+                }
+            }
+        }
+
+        $route = 'index.php?option=com_ysinventory&view=' . $view;
+
+        if ($id > 0) {
+            $route .= '&id=' . $id;
+        }
+
+        return $route;
+    }
+
+    protected function menuItemMatches($menuItem, string $view, int $id = 0): bool
+    {
+        if (!$menuItem) {
+            return false;
+        }
+
+        $query = $menuItem->query ?? [];
+
+        if (($query['option'] ?? '') !== 'com_ysinventory' || ($query['view'] ?? '') !== $view) {
+            return false;
+        }
+
+        if ($id > 0) {
+            return (int) ($query['id'] ?? 0) === $id;
+        }
+
+        return true;
     }
 
     protected function prepareDocument()

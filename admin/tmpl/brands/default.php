@@ -67,9 +67,6 @@ if ($saveOrder && !empty($this->items)) {
                                 <th scope="col">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'COM_YSINVENTORY_FIELD_NAME_LABEL', 'a.name', $listDirn, $listOrder); ?>
                                 </th>
-                                <th scope="col" class="w-10 d-none d-md-table-cell">
-                                    <?php echo Text::_('COM_YSINVENTORY_FIELD_IMAGE_LABEL'); ?>
-                                </th>
                                 <th scope="col" class="w-5 d-none d-md-table-cell">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'JGRID_HEADING_ID', 'a.id', $listDirn, $listOrder); ?>
                                 </th>
@@ -122,11 +119,6 @@ if ($saveOrder && !empty($this->items)) {
                                         </div>
                                     </div>
                                 </th>
-                                <td class="small d-none d-md-table-cell">
-                                    <?php if (!empty($item->image)) : ?>
-                                        <img src="<?php echo $this->escape($item->image); ?>" alt="<?php echo $this->escape($item->name); ?>" style="max-height:40px;">
-                                    <?php endif; ?>
-                                </td>
                                 <td class="d-none d-md-table-cell">
                                     <?php echo $item->id; ?>
                                 </td>

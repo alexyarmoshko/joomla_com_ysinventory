@@ -40,6 +40,7 @@ class ItemModel extends BaseDatabaseModel
 
         $db = $this->getDatabase();
         $query = $db->getQuery(true);
+        $viewLevels = $app->getIdentity()->getAuthorisedViewLevels();
 
         $query->select($db->quoteName([
             'a.id',
@@ -65,8 +66,7 @@ class ItemModel extends BaseDatabaseModel
         $query->bind(':itemId', $itemId, ParameterType::INTEGER);
 
         // Access filter.
-        $user = $app->getIdentity();
-        $query->whereIn($db->quoteName('a.access'), $user->getAuthorisedViewLevels());
+        $query->whereIn($db->quoteName('a.access'), $viewLevels);
 
         // Join inventory name (only published).
         $query->select($db->quoteName('inv.name', 'inventory_name'))
@@ -77,14 +77,16 @@ class ItemModel extends BaseDatabaseModel
                 . ' AND ' . $db->quoteName('inv.published') . ' = 1'
             );
 
-        // Join category title (only published).
+        // Require a visible category so hidden categories do not leak linked assets.
         $query->select($db->quoteName('cat.title', 'category_title'))
             ->join(
-                'LEFT',
+                'INNER',
                 $db->quoteName('#__ysi_categories', 'cat')
                 . ' ON ' . $db->quoteName('cat.id') . ' = ' . $db->quoteName('a.catid')
                 . ' AND ' . $db->quoteName('cat.published') . ' = 1'
+                . ' AND ' . $db->quoteName('cat.level') . ' > 0'
             );
+        $query->whereIn($db->quoteName('cat.access'), $viewLevels);
 
         // Join brand name (only published).
         $query->select($db->quoteName('br.name', 'brand_name'))
