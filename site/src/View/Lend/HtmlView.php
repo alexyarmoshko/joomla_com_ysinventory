@@ -19,6 +19,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\GenericDataException;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
+use YakShaver\Component\Ysinventory\Administrator\Helper\ModeratorHelper;
 
 class HtmlView extends BaseHtmlView
 {
@@ -41,8 +42,21 @@ class HtmlView extends BaseHtmlView
 
         $model = $this->getModel();
 
-        // Moderator check.
-        if (!$model->isModerator($user)) {
+        // Load item first so we can scope the moderation check by category.
+        $this->item = $model->getItem();
+
+        $catId = null;
+
+        if ($this->item && !empty($this->item->ysi_item_id)) {
+            $catId = $model->getItemCategoryId((int) $this->item->ysi_item_id);
+
+            if ($catId <= 0) {
+                $catId = null;
+            }
+        }
+
+        // Moderator check scoped to the loan's item's category.
+        if (!ModeratorHelper::isModerator($user, $catId)) {
             $app->enqueueMessage(Text::_('COM_YSINVENTORY_ERROR_LEND_NOT_AUTHORISED_MODERATE'), 'error');
             $app->redirect(Route::_('index.php?option=com_ysinventory&view=lends', false));
 
@@ -50,7 +64,6 @@ class HtmlView extends BaseHtmlView
         }
 
         $this->form = $model->getForm();
-        $this->item = $model->getItem();
         $this->state = $model->getState();
 
         if (\count($errors = $model->getErrors())) {

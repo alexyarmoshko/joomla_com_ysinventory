@@ -22,6 +22,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\Database\ParameterType;
 use YakShaver\Component\Ysinventory\Administrator\Helper\ModeratorHelper;
 
 class LendController extends FormController
@@ -36,17 +37,33 @@ class LendController extends FormController
     /**
      * Check whether the user is allowed to add a new loan record.
      *
+     * During save (when $data contains ysi_item_id), verifies the user
+     * moderates the selected item's category. During form open ($data empty),
+     * allows access if the user is a moderator for any scope.
+     *
      * @param   array  $data  An array of input data.
      *
      * @return  bool
      */
     protected function allowAdd($data = [])
     {
-        return ModeratorHelper::isModerator(Factory::getApplication()->getIdentity());
+        $user = Factory::getApplication()->getIdentity();
+        $itemId = (int) ($data['ysi_item_id'] ?? 0);
+
+        if ($itemId > 0) {
+            $catId = $this->getLoanCategoryId(['ysi_item_id' => $itemId], 'id');
+
+            return ModeratorHelper::isModerator($user, $catId);
+        }
+
+        return ModeratorHelper::isModerator($user);
     }
 
     /**
      * Check whether the user is allowed to edit a loan record.
+     *
+     * Scopes the check to the loan's item's category so category-level
+     * moderators can only edit loans for items in their moderated categories.
      *
      * @param   array   $data  An array of input data.
      * @param   string  $key   The name of the key for the primary key; default is id.
@@ -55,7 +72,58 @@ class LendController extends FormController
      */
     protected function allowEdit($data = [], $key = 'id')
     {
-        return ModeratorHelper::isModerator(Factory::getApplication()->getIdentity());
+        $user = Factory::getApplication()->getIdentity();
+        $catId = $this->getLoanCategoryId($data, $key);
+
+        return ModeratorHelper::isModerator($user, $catId);
+    }
+
+    /**
+     * Resolve the category ID for the item linked to a loan record.
+     *
+     * Checks form data for ysi_item_id first, then falls back to loading
+     * the loan record by primary key.
+     *
+     * @param   array   $data  Form/request data.
+     * @param   string  $key   Primary key field name.
+     *
+     * @return  int|null  Category ID, or null if undetermined.
+     */
+    private function getLoanCategoryId(array $data, string $key): ?int
+    {
+        $db = Factory::getContainer()->get('DatabaseDriver');
+
+        $itemId = (int) ($data['ysi_item_id'] ?? 0);
+
+        if ($itemId <= 0) {
+            $recordId = (int) ($data[$key] ?? 0);
+
+            if ($recordId <= 0) {
+                return null;
+            }
+
+            $query = $db->getQuery(true)
+                ->select($db->quoteName('ysi_item_id'))
+                ->from($db->quoteName('#__ysi_lends'))
+                ->where($db->quoteName('id') . ' = :id')
+                ->bind(':id', $recordId, ParameterType::INTEGER);
+            $db->setQuery($query);
+            $itemId = (int) $db->loadResult();
+        }
+
+        if ($itemId <= 0) {
+            return null;
+        }
+
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('catid'))
+            ->from($db->quoteName('#__ysi_items'))
+            ->where($db->quoteName('id') . ' = :itemId')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER);
+        $db->setQuery($query);
+        $catId = (int) $db->loadResult();
+
+        return $catId > 0 ? $catId : null;
     }
 
     /**

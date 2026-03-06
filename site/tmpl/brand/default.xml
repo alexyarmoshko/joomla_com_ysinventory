@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <layout title="COM_YSINVENTORY_BRAND_VIEW_DEFAULT_TITLE"
+        option="COM_YSINVENTORY_BRAND_VIEW_DEFAULT_OPTION">
+        <message>
+            <![CDATA[COM_YSINVENTORY_BRAND_VIEW_DEFAULT_DESC]]>
+        </message>
+    </layout>
+
+    <fields name="request">
+        <fieldset name="request">
+            <field
+                name="id"
+                type="sql"
+                label="COM_YSINVENTORY_FIELD_SELECT_BRAND_LABEL"
+                query="SELECT id AS value, name AS text FROM #__ysi_brands WHERE published = 1 ORDER BY name"
+                key_field="value"
+                value_field="text"
+                required="true"
+                default="">
+                <option value="">COM_YSINVENTORY_SELECT_BRAND</option>
+            </field>
+        </fieldset>
+    </fields>
+</metadata>

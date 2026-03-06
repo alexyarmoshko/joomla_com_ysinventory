@@ -5,7 +5,7 @@ Joomla 5.4 component for managing inventories, assets, and loans.
 ## Current Status
 
 - Version: **1.0.0**
-- Release state: **in progress**
+- Release state: **released**
 - Package output: `installation/com_ysinventory-v1-0-0.zip`
 
 ## UI Terminology

@@ -1,6 +1,6 @@
 # Release Notes
 
-## v1.0.0 (in progress)
+## v1.0.0
 
 Initial release.
 
@@ -31,7 +31,7 @@ Initial release.
 
 ### Frontend views
 
-- Menu item metadata for all 8 frontend views (brands, brand, categories, category, tags, tag, items, item)
+- Menu item metadata for all 9 frontend views (brands, brand, categories, category, tags, tag, items, item, lends)
 - Joomla breadcrumb support across all frontend views
 - Borrowings tab on item detail with server-side pagination
 

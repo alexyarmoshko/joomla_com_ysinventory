@@ -56,6 +56,28 @@ class LendModel extends AdminModel
         $itemId   = (int) $this->extractFieldValue($stateCheckData, 'ysi_item_id', $this->getRequestedItemId());
         $loaneeId = (int) $this->extractFieldValue($stateCheckData, 'ysi_user_id', $this->extractFieldValue($item, 'ysi_user_id', 0));
 
+        // For new records, restrict asset selector to categories the user moderates.
+        if ($recordId <= 0) {
+            $user = $this->getCurrentUser();
+
+            if (!ModeratorHelper::isGlobalModerator($user)) {
+                $modCatIds = ModeratorHelper::getModeratedCategoryIds($user);
+
+                if (!empty($modCatIds)) {
+                    $catList = implode(',', array_map('intval', $modCatIds));
+                    $form->setFieldAttribute('ysi_item_id', 'query',
+                        'SELECT id AS value, name AS text FROM #__ysi_items'
+                        . ' WHERE published = 1 AND catid IN (' . $catList . ')'
+                        . ' ORDER BY name'
+                    );
+                } else {
+                    $form->setFieldAttribute('ysi_item_id', 'query',
+                        'SELECT id AS value, name AS text FROM #__ysi_items WHERE 1 = 0'
+                    );
+                }
+            }
+        }
+
         // Restrict loanee options to request groups (category override, global fallback).
         $groupIds = $this->getRequestGroupIds($itemId);
         $form->setFieldAttribute('ysi_user_id', 'query', $this->buildLoaneeQuery($groupIds, $loaneeId));
@@ -236,7 +258,11 @@ class LendModel extends AdminModel
             return false;
         }
 
-        return $this->isModerator($this->getCurrentUser());
+        $user = $this->getCurrentUser();
+        $itemId = (int) ($record->ysi_item_id ?? 0);
+        $catId = ($itemId > 0) ? $this->getItemCategoryId($itemId) : 0;
+
+        return ModeratorHelper::isModerator($user, $catId > 0 ? $catId : null);
     }
 
     protected function canEditState($record)
@@ -312,14 +338,22 @@ class LendModel extends AdminModel
      */
     public function requestLoan($user, int $itemId, string $from, string $to, string $note): bool
     {
-        // Load item with access and catid.
+        // Load item with access and catid, requiring a visible category.
         $db = $this->getDatabase();
         $query = $db->getQuery(true)
-            ->select($db->quoteName(['id', 'ysi_quantity', 'access', 'catid']))
-            ->from($db->quoteName('#__ysi_items'))
-            ->where($db->quoteName('id') . ' = :itemId')
-            ->where($db->quoteName('published') . ' = 1')
-            ->bind(':itemId', $itemId, ParameterType::INTEGER);
+            ->select($db->quoteName(['a.id', 'a.ysi_quantity', 'a.access', 'a.catid']))
+            ->from($db->quoteName('#__ysi_items', 'a'))
+            ->where($db->quoteName('a.id') . ' = :itemId')
+            ->where($db->quoteName('a.published') . ' = 1')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER)
+            ->join(
+                'INNER',
+                $db->quoteName('#__ysi_categories', 'cat')
+                . ' ON ' . $db->quoteName('cat.id') . ' = ' . $db->quoteName('a.catid')
+                . ' AND ' . $db->quoteName('cat.published') . ' = 1'
+                . ' AND ' . $db->quoteName('cat.level') . ' > 0'
+            )
+            ->whereIn($db->quoteName('cat.access'), $user->getAuthorisedViewLevels());
         $db->setQuery($query);
         $item = $db->loadObject();
 
@@ -429,14 +463,39 @@ class LendModel extends AdminModel
     }
 
     /**
+     * Look up the category ID for a given item.
+     *
+     * @param   int  $itemId  Item ID.
+     *
+     * @return  int  Category ID (0 if not found).
+     */
+    public function getItemCategoryId(int $itemId): int
+    {
+        if ($itemId <= 0) {
+            return 0;
+        }
+
+        $db = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('catid'))
+            ->from($db->quoteName('#__ysi_items'))
+            ->where($db->quoteName('id') . ' = :itemId')
+            ->bind(':itemId', $itemId, ParameterType::INTEGER);
+        $db->setQuery($query);
+
+        return (int) $db->loadResult();
+    }
+
+    /**
      * Check whether the given user belongs to a configured moderation group.
      *
-     * @param   \Joomla\CMS\User\User  $user  The user to check.
+     * @param   \Joomla\CMS\User\User  $user   The user to check.
+     * @param   int|null               $catId  Optional category ID for scoped check.
      *
      * @return  bool
      */
-    public function isModerator($user)
+    public function isModerator($user, ?int $catId = null)
     {
-        return ModeratorHelper::isModerator($user);
+        return ModeratorHelper::isModerator($user, $catId);
     }
 }

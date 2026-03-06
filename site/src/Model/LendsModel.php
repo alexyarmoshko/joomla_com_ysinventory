@@ -100,12 +100,24 @@ class LendsModel extends ListModel
                 $db->quoteName('#__users', 'u') . ' ON ' . $db->quoteName('u.id') . ' = ' . $db->quoteName('a.ysi_user_id')
             );
 
-        // Visibility gating: moderators see all, regular users see only own loans.
+        // Visibility gating: global moderators see all, category moderators see
+        // loans in their moderated categories plus own, others see only own.
         $user = Factory::getApplication()->getIdentity();
 
-        if (!$user->guest && !$this->isModerator($user)) {
+        if (!$user->guest && !ModeratorHelper::isGlobalModerator($user)) {
             $userId = (int) $user->id;
-            $query->where($db->quoteName('a.ysi_user_id') . ' = :currentUserId');
+            $modCatIds = ModeratorHelper::getModeratedCategoryIds($user);
+
+            if (!empty($modCatIds)) {
+                $catList = implode(',', array_map('intval', $modCatIds));
+                $query->where(
+                    '(' . $db->quoteName('a.ysi_user_id') . ' = :currentUserId'
+                    . ' OR ' . $db->quoteName('it.catid') . ' IN (' . $catList . '))'
+                );
+            } else {
+                $query->where($db->quoteName('a.ysi_user_id') . ' = :currentUserId');
+            }
+
             $query->bind(':currentUserId', $userId, ParameterType::INTEGER);
         }
 
@@ -148,6 +160,9 @@ class LendsModel extends ListModel
     /**
      * Get distinct assets that have loan records, for the filter dropdown.
      *
+     * Applies the same moderator/non-moderator visibility rule as the main
+     * list query so non-moderators only see assets from their own loans.
+     *
      * @return  array  Array of objects with ->value and ->text properties.
      */
     public function getAssetFilterOptions(): array
@@ -160,8 +175,29 @@ class LendsModel extends ListModel
             ->join(
                 'INNER',
                 $db->quoteName('#__ysi_items', 'it') . ' ON ' . $db->quoteName('it.id') . ' = ' . $db->quoteName('l.ysi_item_id')
-            )
-            ->order($db->quoteName('it.name') . ' ASC');
+            );
+
+        // Apply the same three-tier visibility as the main list query.
+        $user = Factory::getApplication()->getIdentity();
+
+        if (!$user->guest && !ModeratorHelper::isGlobalModerator($user)) {
+            $userId = (int) $user->id;
+            $modCatIds = ModeratorHelper::getModeratedCategoryIds($user);
+
+            if (!empty($modCatIds)) {
+                $catList = implode(',', array_map('intval', $modCatIds));
+                $query->where(
+                    '(' . $db->quoteName('l.ysi_user_id') . ' = :currentUserId'
+                    . ' OR ' . $db->quoteName('it.catid') . ' IN (' . $catList . '))'
+                );
+            } else {
+                $query->where($db->quoteName('l.ysi_user_id') . ' = :currentUserId');
+            }
+
+            $query->bind(':currentUserId', $userId, ParameterType::INTEGER);
+        }
+
+        $query->order($db->quoteName('it.name') . ' ASC');
         $db->setQuery($query);
 
         return $db->loadObjectList() ?: [];
