@@ -1,5 +1,4 @@
 # Joomla Component Makefile — com_ysinventory
-# Derived from a component Makefile template
 
 COMPONENT_NAME := com_ysinventory
 MANIFEST := ysinventory.xml
