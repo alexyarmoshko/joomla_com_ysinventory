@@ -7,7 +7,7 @@
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <authorEmail>me@kayakshaver.com</authorEmail>
     <authorUrl>https://www.kayakshaver.com</authorUrl>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <description>COM_YSINVENTORY_XML_DESCRIPTION</description>
     <namespace path="src">YakShaver\Component\Ysinventory</namespace>
     <scriptfile>script.php</scriptfile>
@@ -77,6 +77,6 @@
     </administration>
 
     <updateservers>
-        <server type="extension" priority="1" name="Yak Shaver Inventory Updates">https://raw.githubusercontent.com/alexyarmoshko/joomla_com_ysinventory/main/com_ysinventory.update.xml</server>
+        <server type="extension" priority="1" name="Yak Shaver Inventory Updates">https://raw.githubusercontent.com/alexyarmoshko/joomla_update_system/refs/heads/main/manifests/com_ysinventory.update.xml</server>
     </updateservers>
 </extension>

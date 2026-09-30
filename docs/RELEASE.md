@@ -1,6 +1,15 @@
 # Release Notes
 
-## v1.0.0
+## 1.0.1
+
+### Packaging and updates
+
+- Update feed download URL fixed: it pointed at `releases/download/v1.0.0/`, which does not exist, so Joomla could not download 1.0.0 as an update
+- Update server moved to `joomla_update_system`; this repository's `com_ysinventory.update.xml` stays as a feed for sites still on 1.0.0
+- Reproducible release packages: built from the tag with a vendored deterministic packager (`tools/jzip.php`), so a rebuild from the tag matches the published `sha256`
+- `make release`, `make dist_release` and `make dist_dev` replace `make dist`; dev packages drop `<updateservers>`
+
+## 1.0.0
 
 Initial release.
 
@@ -42,4 +51,4 @@ Initial release.
 - Joomla ACL integration with component and per-category permissions
 - Full localization via language files (admin and site)
 - Centralized helper classes (`StatusHelper`, `ModeratorHelper`) eliminating cross-boundary dependencies and code duplication
-- Makefile for repeatable build packaging
+- Makefile for build packaging
