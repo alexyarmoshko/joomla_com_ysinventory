@@ -63,7 +63,7 @@ Packages are reproducible: a release zip is built from its git tag with the vend
 Building needs git, GNU make, a POSIX shell with `tar` and `awk`, `sha256sum` or `shasum`, and PHP 8.3 with the zlib and SimpleXML extensions.
 
 ```bash
-make info          # version, package list, output paths
+make info          # version, package file count, output paths, download URL
 make lint          # php -l on every packaged PHP file, well-formedness of every XML file
 make dist_dev      # test package from the working tree, without <updateservers>
 make release       # checks, then tags the manifest version

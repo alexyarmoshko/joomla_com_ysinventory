@@ -204,7 +204,7 @@ DEPS_CMD := @echo "No dependencies to install."
 TEST_CMD := @echo "No automated tests."
 # $(JZIP) is linted although it does not ship: a syntax error in it would otherwise
 # surface only after `release` has created the tag.
-LINT_CMD := set -e; \
+LINT_CMD := @set -e; \
 	for f in $(filter %.php,$(PACKAGE_FILES)) $(JZIP); do php -l "$$f" >/dev/null || exit 1; done; \
 	for f in $(filter %.xml,$(PACKAGE_FILES)) $(UPDATE_TEMPLATE); do \
 		php -r 'libxml_use_internal_errors(true); if (simplexml_load_file($$argv[1]) === false) { fwrite(STDERR, "FAIL: malformed XML in $$argv[1]\n"); exit(1); }' "$$f" || exit 1; \
@@ -244,7 +244,7 @@ endef
 info:
 	@echo "Extension:       $(EXT_NAME)"
 	@echo "Version:         $(VERSION)"
-	@echo "Source:          $(PACKAGE_FILES)"
+	@echo "Package files:   $(words $(PACKAGE_FILES)) (PACKAGE_FILES in Makefile)"
 	@echo "Release package: $(RELEASE_ZIP)"
 	@echo "Dev package:     $(DEV_ZIP)"
 	@echo "Update template: $(UPDATE_TEMPLATE)"
@@ -277,9 +277,9 @@ release:
 		echo "FAIL: $(RELEASE_NOTES) has no '## $(VERSION)' heading - write the release notes before tagging"; \
 		exit 1; \
 	fi
-	$(MAKE) test
-	$(MAKE) lint
-	git tag "$(VERSION)"
+	@$(MAKE) --no-print-directory test
+	@$(MAKE) --no-print-directory lint
+	@git tag "$(VERSION)"
 	@echo "Tagged $(VERSION) - next: make dist_release"
 
 dist_release:
@@ -351,7 +351,7 @@ dist_release:
 	fi
 	$(call package,$(RELEASE_ZIP),$(RELEASE_STAGE),$$(git log -1 --format=%ct "$(VERSION)"))
 	@rm -rf "$(RELEASE_STAGE)"
-	$(MAKE) update_manifest
+	@$(MAKE) --no-print-directory update_manifest
 
 dist_dev:
 	@rm -rf "$(DEV_STAGE)"
