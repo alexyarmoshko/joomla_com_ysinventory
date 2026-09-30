@@ -26,7 +26,7 @@ info:
 dist: clean $(ZIP_PATH) $(UPDATE_XML)
 	@echo "--- Updating extension update XML ---"
 	@SHA256="$$( (command -v sha256sum >/dev/null && sha256sum "$(ZIP_PATH)" || shasum -a 256 "$(ZIP_PATH)") | awk '{print $$1}' )"; \
-	URL="https://github.com/$(GITHUB_OWNER)/$(GITHUB_REPO)/releases/download/v$(VERSION)/$(ZIP_NAME)"; \
+	URL="https://github.com/$(GITHUB_OWNER)/$(GITHUB_REPO)/releases/download/$(VERSION)/$(ZIP_NAME)"; \
 	echo "Package SHA256: $$SHA256"; \
 	awk -v version="$(VERSION)" \
 	    -v url="$$URL" \
